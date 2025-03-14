@@ -1,0 +1,75 @@
+@import './base.css';
+
+html,body {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(242, 242, 246, 1);
+}
+* {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  outline: none;
+}
+#app {
+  height: 100%;
+  font-weight: normal;
+  font-size: 14px;
+}
+.flex {
+  display: flex;
+  &.align-center {
+    align-items: center;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomAuto {
+  0% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.3;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+.hover-danger {
+  color: #ff4d4f !important;
+}
+
+/**
+ * 多行省略
+ * @line 行数 默认值 2
+ */
+/**
+ * 多行省略
+ * @line 行数 默认值 2
+ */
+.show-lines(@line: 2) {
+  display: -webkit-box;
+  /* autoprefixer: ignore next */
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: @line;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.show-lines-1 {
+  .show-lines(1);
+}
+.show-lines-2 {
+  .show-lines(2);
+}

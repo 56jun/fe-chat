@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="30px" height="30px" viewBox="0 0 30 30" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>编组 3</title>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="02未输入问题" transform="translate(-261, -1008)">
+            <g id="编组-5" transform="translate(30, 994)">
+                <g id="编组-3" transform="translate(231, 14)">
+                    <path d="M23,1.5 C24.2426407,1.5 25.3676407,2.00367966 26.1819805,2.81801948 C26.9963203,3.63235931 27.5,4.75735931 27.5,6 L27.5,19 C27.5,21.6233526 26.4366763,23.9983526 24.7175144,25.7175144 C22.9983526,27.4366763 20.6233526,28.5 18,28.5 L7,28.5 C5.75735931,28.5 4.63235931,27.9963203 3.81801948,27.1819805 C3.00367966,26.3676407 2.5,25.2426407 2.5,24 L2.5,6 C2.5,4.75735931 3.00367966,3.63235931 3.81801948,2.81801948 C4.63235931,2.00367966 5.75735931,1.5 7,1.5 L23,1.5 Z" id="矩形" stroke="#0D0E15" stroke-width="3" fill="#FFFFFF" fill-rule="nonzero"></path>
+                    <rect id="矩形" fill="#0D0E15" x="8" y="6" width="7" height="3" rx="1.5"></rect>
+                    <rect id="矩形备份-2" fill="#486FE0" x="8" y="13" width="14" height="3" rx="1.5"></rect>
+                    <rect id="矩形备份-3" fill="#0D0E15" x="8" y="20" width="9" height="3" rx="1.5"></rect>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

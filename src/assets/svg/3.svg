@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="30px" height="30px" viewBox="0 0 30 30" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>编组 3备份 2</title>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="02未输入问题" transform="translate(-450, -1006)">
+            <g id="编组-5" transform="translate(30, 994)">
+                <g id="编组-3备份-2" transform="translate(420, 12)">
+                    <path d="M15.382977,1.56060095 L24,1.56060095 C26.209139,1.56060095 28,3.35146195 28,5.56060095 L28,24.4039574 C28,26.6130963 26.209139,28.4039574 24,28.4039574 L6.382977,28.4039574 C4.173838,28.4039574 2.382977,26.6130963 2.382977,24.4039574 L2.382977,17.9990811 L2.382977,17.9990811" id="矩形" stroke="#0D0E15" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill-rule="nonzero" transform="translate(15.1915, 14.9823) scale(-1, -1) translate(-15.1915, -14.9823)"></path>
+                    <circle id="椭圆形" stroke="#486FE0" stroke-width="3" cx="22" cy="21" r="4.5"></circle>
+                    <path d="M9.5,8 L19.5,8 C20.3284271,8 21,8.67157288 21,9.5 C21,10.3284271 20.3284271,11 19.5,11 L9.5,11 C8.67157288,11 8,10.3284271 8,9.5 C8,8.67157288 8.67157288,8 9.5,8 Z" id="矩形备份-2" fill="#0D0E15"></path>
+                    <path d="M9.5,16 L12.5,16 C13.3284271,16 14,16.6715729 14,17.5 C14,18.3284271 13.3284271,19 12.5,19 L9.5,19 C8.67157288,19 8,18.3284271 8,17.5 C8,16.6715729 8.67157288,16 9.5,16 Z" id="矩形备份-3" fill="#0D0E15"></path>
+                    <rect id="矩形备份-4" fill="#486FE0" transform="translate(26.7099, 26.404) rotate(45) translate(-26.7099, -26.404)" x="23.2098638" y="24.9039574" width="7" height="3" rx="1.5"></rect>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

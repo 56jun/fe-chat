@@ -1,12 +1,12 @@
 <template>
-  <Layout/>
+<div class="app-list"></div>
 </template>
 
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
-import Layout from "@/views/layout.vue";
+
+
 </script>
 
 <style lang="less" scoped>
-
+.app-list {}
 </style>

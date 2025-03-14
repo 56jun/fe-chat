@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="30px" height="30px" viewBox="0 0 30 30" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>编组 3备份</title>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="02未输入问题" transform="translate(-47, -1008)">
+            <g id="编组-5" transform="translate(30, 994)">
+                <g id="编组-3备份" transform="translate(17, 14)">
+                    <rect id="矩形" stroke="#0D0E15" stroke-width="3" fill-rule="nonzero" x="2.5" y="1.5" width="25" height="27" rx="6"></rect>
+                    <path d="M22.5,1.5 L22.5,11.4337604 L19.6460174,10.0341484 C18.9264522,9.66682576 18.0731043,9.6697222 17.3555561,10.0430443 L14.6001723,11.4766005 L14.504846,1.5 L22.5,1.5 Z" id="矩形" stroke="#0D0E15" stroke-width="3" fill-rule="nonzero"></path>
+                    <rect id="矩形备份-3" fill="#486FE0" x="8" y="20" width="14" height="3" rx="1.5"></rect>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="30px" height="30px" viewBox="0 0 30 30" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>编组 4</title>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="02未输入问题" transform="translate(-695, -1008)">
+            <g id="编组-5" transform="translate(30, 994)">
+                <g id="编组-4" transform="translate(665, 14)">
+                    <path d="M3.06480618,27.4264053 L3.06480618,7.1255855 C3.06480618,6.2385768 3.64903844,5.4575369 4.4999335,5.20701341 L16.2240481,1.75515875 C17.2836462,1.44318818 18.3955223,2.04926005 18.7074928,3.10885816 C18.761499,3.29228835 18.7889207,3.48251552 18.7889207,3.67373084 L18.7889207,27.4264053 L18.7889207,27.4264053" id="路径-194" stroke="#0D0E15" stroke-width="3" fill-rule="nonzero"></path>
+                    <path d="M18.4132671,10.0774136 L25.470529,12.9664711 C26.2219413,13.2740796 26.7128149,14.0054435 26.7128149,14.8173816 L26.7128149,27.0774136 L26.7128149,27.0774136" id="路径-195" stroke="#0D0E15" stroke-width="3" fill-rule="nonzero"></path>
+                    <rect id="矩形" fill="#0D0E15" x="0" y="26.7502442" width="30" height="3" rx="1.5"></rect>
+                    <line x1="7.92697774" y1="13.1813324" x2="14.014184" y2="11.0455434" id="路径-196" stroke="#486FE0" stroke-width="3" fill="#FFFFFF" fill-rule="nonzero"></line>
+                    <line x1="7.92697774" y1="21.1813324" x2="14.014184" y2="19.0455434" id="路径-196备份" stroke="#486FE0" stroke-width="3" fill="#FFFFFF" fill-rule="nonzero"></line>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
