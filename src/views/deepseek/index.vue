@@ -7,7 +7,7 @@
         <span>&nbsp;{{ message.length }}条记录</span>
       </div>
     </div>
-    <div class="answer-box">
+    <div ref="answerBoxRef" class="answer-box">
       <div class="answer-content">
         <template v-for="(item, index) in message">
           <div v-if="item.role === 'user'" style="display: flex; justify-content: flex-end">
@@ -30,7 +30,7 @@
             </div>
           </div>
 
-          <div v-if="item.role === 'assistant' && item.html" class="answer-content__assistant">
+          <div v-if="item.role === 'assistant' && (item.html || item.reasoning_content)" class="answer-content__assistant">
             <div class="flex align-center">
               <img src="../../assets/robot-icon.png" class="robot-bg" alt="icon"></img>
               <div class="answer-content__assistant__config-bar">
@@ -38,11 +38,15 @@
               </div>
             </div>
             <div class="answer-item" :id="'answerBox' + index">
-              <!--              <div v-if="progress === 'preThinking'">思考中...</div>-->
-              <template v-if="item.html">
-                <div v-html="item.html"
-                     class="markdown-body select-text"></div>
-              </template>
+              <div v-if="item.reasoning_content" class="answer-item__reasoning">
+                <div class="answer-item__reasoning__title" @click="() => item.hide = !item.hide">
+<!--                  <el-icon><Smoking /></el-icon>-->
+                  <span>&nbsp;&nbsp;思考过程&nbsp;&nbsp;</span>
+                  <el-icon><ArrowDown v-show="item.hide" /><ArrowUp v-show="!item.hide" /></el-icon>
+                </div>
+                <div class="answer-item__reasoning__content" :class="{ 'hide': item.hide }" v-html="item.reasoning_content"></div>
+              </div>
+              <div v-if="item.html" v-html="item.html" class="markdown-body select-text"></div>
             </div>
           </div>
         </template>
@@ -54,6 +58,7 @@
           </el-icon>&nbsp;思考中...
         </div>
       </div>
+      <div ref="bottomLineRef"></div>
     </div>
     <div class="input-area">
       <div v-if="fileList.length" class="input-area__file-list">
@@ -74,7 +79,10 @@
                   autoHeight border="none"
                   :autosize="true"
                   confirm-type="search"
-                  @keydown.enter.stop="keyDownEnter"></el-input>
+                  @compositionstart="() => compositionInputStatus = true"
+                  @compositionend="() => compositionInputStatus = false"
+                  @keydown.enter.stop="keyDownEnter"
+        ></el-input>
         <div class="AI-button">
           <el-upload
             action="#"
@@ -107,14 +115,13 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, nextTick, watch, inject } from "vue";
 import { ElInput, ElMessage } from "element-plus";
+import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
 import FileIcon from "./file-icon.vue";
 import axios from "axios";
 import { marked } from 'marked'
 
-console.log('marked', marked)
-
-import { getAppInfo, getSign, guid, debounce, copyDomText } from "../../utils/config";
-import { getPaginationRecords, uploadFile } from "../../api/api.ts";
+import { copyDomText, throttle } from "@/utils/config";
+import { getPaginationRecords, uploadFile } from "@/api/api.ts";
 
 import sendImg from "@/assets/send.png";
 import Fujian from "@/assets/fujian.png";
@@ -130,68 +137,43 @@ const { appId } = getConfig()
 const getChatList = inject('getChatList')
 const needUpdateParentChatListTitle = ref(false)
 
-watch(() => activeChatId?.value, async (val) => {
-  if (!val) return;
-  const result: any = await getPaginationRecords({
-    offset: 0,
-    pageSize: 20,
-    appId: appId,
-    chatId: val,
-  })
-  message.value = (result?.data?.list || []).map((item: any) => {
-    if (item.obj === 'AI') {
-      const contentIndex = item.value.findIndex((x: any) => x.type === 'text')
-      const content = item.value[contentIndex].text.content
-      return {
-        role: 'assistant',
-        content: content,
-        html: marked.parse(content),
-      }
-    } else {
-      return {
-        role: 'user',
-        content: item.value.map((x: any) => {
-          if (x.type === 'text') {
-            return {
-              type: x.type,
-              text: x.text.content,
-            }
-          } else if(x.type === 'file') {
-            return {
-              type: 'file_url',
-              name: x.file.name,
-              url: x.file.url,
-            }
-          }
-        }),
-      }
-    }
-  })
-  needUpdateParentChatListTitle.value = message.value.length === 0
-  nextTick(scrollToBottom)
-}, { immediate: true })
-
 // const DEEPSEEK_API_KEY = 'fastgpt-tjw7kzL5oePDz8sSZTMZ0HAXEtCyT59dHDgXImhMMXBxy0AW9aAcDVqYj'; // 替换为你的 DeepSeek API 密钥
 const DEEPSEEK_API_URL = '/api'; // 替换为 DeepSeek 的 API 地址
 
 const toDealwith: {
-  index: number,
+  index: number
   task: string
-} = {
+  reasonContent: string
+  reasonIndex: number
+  reset: () => void
+} = window.toDealwith = {
   index: 0,
-  task: ''
+  task: '',
+  reasonContent: '',
+  reasonIndex: 0,
+  reset() {
+    this.index = 0
+    this.task = ''
+    this.reasonContent = ''
+    this.reasonIndex = 0
+  }
 }
 
+const bottomLineRef = ref()
+const answerBoxRef = ref()
 const loading = ref(false)
 const outputState = ref(false)
 const uploadLoading = ref(false)
-const customUid = ref(undefined)
+const answerStartRender = ref(false)
+const reasoningAnswerDone = ref(false)
+const customUid = ref('SongFei')
 const progress = ref('done')
 const dataCache = ref<any[]>([])
+const compositionInputStatus = ref(false)
 const form = reactive({
   question: '',
 })
-const message = ref<ChatMessageType[]>([])
+const message = window.message = ref<ChatMessageType[]>([])
 const messages = ref<ChatMessageType[]>([])
 const fileList = ref<(File | {name: string, url: string})[]>([])
 const activeTag = ref('todo')
@@ -206,11 +188,11 @@ function onScroll() {
   // @ts-ignore
   const { scrollHeight, scrollTop, offsetHeight } = document.querySelector('.answer-box') as Element
   isAutoScroll.value = scrollTop + offsetHeight + 10 >= scrollHeight;
-  console.log('isAutoScroll', isAutoScroll.value)
 }
 
 function keyDownEnter(event: Event | KeyboardEvent) {
   if ("shiftKey" in event && event.shiftKey) return;
+  if (compositionInputStatus.value) return;
   event.preventDefault();
   if (isAutoProceed.value || progress.value === 'outputing') {
     ElMessage.warning('请先停止上一轮对话')
@@ -245,8 +227,8 @@ async function fetchStreamingResponse() {
   message.value.push(messageItem);
   messages.value = [{ ...messageItem }]
   dataCache.value = [];
-  toDealwith.index = 0
-  toDealwith.task = ''
+  let dataResponseTimes = 0;
+  toDealwith.reset()
   const params = {
     chatId: activeChatId.value,
     customUid: customUid.value,// 自定义的用户 ID。在历史记录中，该条记录的使用者会显示为 xxxxxx
@@ -261,13 +243,15 @@ async function fetchStreamingResponse() {
     ...configParams,
   };
   try {
-    message.value.push({ role: 'assistant', content: '思考中...', answer: [], html: '' });
+    message.value.push({ role: 'assistant', content: '思考中...', html: '', reasoning_content: '', hide: false });
     loading.value = true;
-    let content = '';
+    let content = '', reasoningContent = '';
+    answerStartRender.value = false;
+    reasoningAnswerDone.value = false;
     form.question = '';
     isAutoProceed.value = true;
     isAutoScroll.value = true;
-    nextTick(scrollToBottom)
+    scrollToBottom()
 
     let currentStepName = 'answer'
 
@@ -288,37 +272,61 @@ async function fetchStreamingResponse() {
           if (chunk.indexOf('keep-alive') == -1) {
             // 返回流去除已处理的数据，然后继续处理剩下的数据
             let data = chunk.split('data:');
-            data.splice(0, dataCache.value.length);
+            // data.splice(0, dataCache.value.length);
+            data.splice(0, dataResponseTimes);
             if (data.length > 0) {
               data.forEach((val: string) => {
-                console.log('val1', val)
-                if (val.includes('event:')) {
-                  progress.value = 'preThinking'
-                  const stepsName = val.match(/event: (\S*)\n/)?.[1]
-                  if (stepsName) {
-                    currentStepName = stepsName
-                  }
-                } else if (!['fastAnswer', 'answer', 'flowResponses'].includes(currentStepName)) {
-                  const name = JSON.parse(val || '{}').name
-                  message.value[message.value.length - 1].content = name + '...'
-                } else if (val.length > 0 && val.indexOf('[DONE]') == -1) {
+                // if (val.includes('event:')) {
+                //   progress.value = 'preThinking'
+                //   const stepsName = val.match(/event: (\S*)\n/)?.[1]
+                //   if (stepsName) {
+                //     currentStepName = stepsName
+                //   }
+                // } else if (!['fastAnswer', 'answer', 'flowResponses'].includes(currentStepName)) {
+                //   const name = JSON.parse(val || '{}').name
+                //   message.value[message.value.length - 1].content = name + '...'
+                // } else
+                if (val.length > 0 && val.indexOf('[DONE]') == -1) {
                   progress.value = 'preThinking'
                   try {
+                    let markdownReasoningText: string = JSON.parse(val).choices[0].delta.reasoning_content || "";
                     let markdownText: string = JSON.parse(val).choices[0].delta.content || "";
-                    const needStartRender = toDealwith.task.length === toDealwith.index
-                    dataCache.value.push(markdownText);
-                    content = content + markdownText;
-                    message.value[message.value.length - 1].content = content;
-
-                    let htmlContent = marked.parse(content);
-                    if (htmlContent) {
+                    // 有回答内容就更新状态
+                    if (markdownReasoningText || markdownText) {
+                      dataResponseTimes++;
                       if (!outputState.value) outputState.value = true
-                      progress.value = 'outputing'
+                      if (progress.value !== 'outputing') progress.value = 'outputing'
+
+                      // 思考中
+                      if (markdownReasoningText) {
+                        const needStartReasonRender = toDealwith.reasonContent.length === toDealwith.reasonIndex
+                        reasoningContent += markdownReasoningText
+                        message.value[message.value.length - 1].reasoning = reasoningContent;
+                        let htmlReasonContent = marked.parse(reasoningContent);
+                        if (htmlReasonContent) {
+                          toDealwith.reasonContent = htmlReasonContent as string
+                          if (needStartReasonRender) {
+                            renderReasonResponse()
+                          }
+                        }
+                      }
+                      // 答案
+                      if (markdownText) {
+                        const needStartRender = toDealwith.task.length === toDealwith.index
+                        dataCache.value.push(markdownText);
+                        content = content + markdownText;
+                        message.value[message.value.length - 1].content = content;
+                        let htmlContent = marked.parse(content);
+                        if (htmlContent) {
+                          reasoningAnswerDone.value = true
+                        }
+                        toDealwith.task = htmlContent as string
+                        if (needStartRender && answerStartRender.value) {
+                          renderResponse()
+                        }
+                      }
                     }
-                    toDealwith.task = htmlContent as string
-                    if (needStartRender) {
-                      renderResponse()
-                    }
+
                   } catch (e) {
                     console.error(e)
                   }
@@ -377,25 +385,52 @@ function getNextIndex() {
     while (!extraText.slice(0, step).endsWith('>') && step < 40) {
       step++
     }
+  } else if (extraText.startsWith('\n')) {
+    step = 2
   }
   return step
 }
 
+let reasonTimer:number = 0;
+function renderReasonResponse() {
+  const observeItem = message.value[message.value.length - 1]
+  if (!reasonTimer) {
+    reasonTimer = setInterval(() => {
+      if (toDealwith.reasonIndex < toDealwith.reasonContent.length) {
+        const step = getNextIndex()
+        observeItem.reasoning_content = toDealwith.reasonContent.slice(0, toDealwith.reasonIndex + step)
+        toDealwith.reasonIndex += step
+        if (isAutoScroll.value) {
+          scrollToBottom()
+        }
+      } else {
+        clearInterval(reasonTimer)
+        reasonTimer = 0
+        renderResponse()
+      }
+    }, 25)
+  }
+}
+
+let answerTimer:number = 0;
 function renderResponse() {
   const observeItem = message.value[message.value.length - 1]
-  const timer = setInterval(() => {
-    if (toDealwith.index < toDealwith.task.length) {
-      const step = getNextIndex()
-      // const step = 1
-      observeItem.html = toDealwith.task.slice(0, toDealwith.index + step)
-      toDealwith.index += step
-      if (isAutoScroll.value) {
-        nextTick(scrollToBottom)
+  if (!answerTimer) {
+    answerTimer = setInterval(() => {
+      answerStartRender.value = true
+      if (toDealwith.index < toDealwith.task.length) {
+        const step = getNextIndex()
+        observeItem.html = toDealwith.task.slice(0, toDealwith.index + step)
+        toDealwith.index += step
+        if (isAutoScroll.value) {
+          scrollToBottom()
+        }
+      } else {
+        clearInterval(answerTimer)
+        answerTimer = 0
       }
-    } else {
-      clearInterval(timer)
-    }
-  }, 28)
+    }, 35)
+  }
 }
 
 function stopResponse() {
@@ -435,12 +470,12 @@ async function onChange(file: File) {
   })
 }
 
-function scrollToBottom() {
-  const dom = document.querySelector('.answer-box') as Element
-  if (!dom) return;
-  const scrollTop = dom?.scrollHeight
-  dom.scrollTop = scrollTop;
-}
+const scrollToBottom = throttle((noSmooth = false) => {
+  bottomLineRef.value?.scrollIntoView({
+    behavior: !noSmooth ? 'smooth' : 'instant',
+    // block: 'end',
+  })
+}, 25)
 
 function copyText(text: string | undefined) {
   if (!text) return;
@@ -448,6 +483,59 @@ function copyText(text: string | undefined) {
     ElMessage.success("已复制到剪贴板");
   }
 }
+
+watch(() => activeChatId?.value, async (val) => {
+  if (!val) {
+    message.value = []
+    return;
+  }
+  const result: any = await getPaginationRecords({
+    offset: 0,
+    pageSize: 20,
+    appId: appId,
+    chatId: val,
+  })
+  message.value = (result?.data?.list || []).map((item: any) => {
+    if (item.obj === 'AI') {
+      const contentIndex = item.value.findIndex((x: any) => x.type === 'text')
+      const reasoningContentIndex = item.value.findIndex((x: any) => x.type === 'reasoning')
+      const content = item.value[contentIndex].text.content
+      const resultItem: ChatMessageType = {
+        role: 'assistant',
+        content: content,
+        html: marked.parse(content) as string,
+        hide: false,
+      }
+      if (reasoningContentIndex > -1) {
+        const reasonContent = item.value[reasoningContentIndex].reasoning.content
+        resultItem.reasoning = reasonContent
+        resultItem.reasoning_content = marked.parse(reasonContent)
+      }
+      return resultItem
+    } else {
+      return {
+        role: 'user',
+        content: item.value.map((x: any) => {
+          if (x.type === 'text') {
+            return {
+              type: x.type,
+              text: x.text.content,
+            }
+          } else if(x.type === 'file') {
+            return {
+              type: 'file_url',
+              name: x.file.name,
+              url: x.file.url,
+            }
+          }
+        }),
+      }
+    }
+  })
+  needUpdateParentChatListTitle.value = message.value.length === 0
+  scrollToBottom(true)
+}, { immediate: true })
+
 
 onMounted(() => {
   message.value.push({ role: 'assistant', html: '您好，我是高新区任务督办小助手，可以精准查询项目进展情况，也可以做一些统计分析，欢迎向我提问！' } as ChatMessageType);
@@ -560,6 +648,7 @@ onUnmounted(() => {
     }
 
     .answer-item {
+      width: 100%;
       min-height: 20px;
       padding: 12px;
       margin-top: 10px;
@@ -570,6 +659,39 @@ onUnmounted(() => {
       color: #000;
       font-size: 14px;
       border-radius: 0px 8px 8px;
+      &__reasoning {
+        max-width: 100%;
+        &__title {
+          display: inline-block;
+          padding: 5px 12px;
+          border: 1px solid #EBEBEB;
+          border-radius: 8px;
+          background-color: white;
+          cursor: pointer;
+          user-select: none;
+        }
+        &__content {
+          margin: 10px 0;
+          max-width: 100%;
+          padding: 10px;
+          border-left: 2px solid #b3b3b3;
+          height: auto;
+          overflow: hidden;
+          //font-style: italic;
+          color: rgba(0, 0, 0, .6);
+          //background-color: rgba(0, 0, 0, .09);
+          //background-color: #FBFBFC;
+          &.hide {
+            height: 0;
+            padding: 0;
+          }
+          :deep(p) {
+            & + p {
+              margin-top: 5px;
+            }
+          }
+        }
+      }
     }
   }
 
@@ -613,6 +735,11 @@ onUnmounted(() => {
           position: absolute;
           right: -10px;
           top: -10px;
+          cursor: pointer;
+          transition: transform .2s;
+          &:hover {
+            transform: scale(1.1);
+          }
         }
       }
     }
@@ -681,12 +808,13 @@ onUnmounted(() => {
         position: absolute;
         bottom: 10px;
         left: 10px;
+        opacity: 0.6;
 
         img {
           height: 30px;
 
           &.loading {
-            animation: fadeIn 1.5s linear infinite;
+            animation: fadeIn 2s linear infinite;
           }
         }
       }

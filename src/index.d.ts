@@ -13,5 +13,6 @@ type ChatMessageType = {
   content: { type: string; name: string; url: string, text?: string }[] | string;
   html?: string;
   answer?: any;
+  hide?: boolean;// 是否收起展开思考过程
   [key: string]: any;
 }

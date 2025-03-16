@@ -3,7 +3,6 @@
 </template>
 
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
 import Layout from "@/views/layout.vue";
 </script>
 
