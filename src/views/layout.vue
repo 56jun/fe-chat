@@ -5,8 +5,8 @@
     <div class="chat-wrapper">
       <ChatList/>
       <div v-if="activeChatId" class="chat-detail">
-        <router-view/>
-<!--        <DeepSeek/>-->
+<!--        <router-view/>-->
+        <DeepSeek/>
       </div>
     </div>
   </div>
@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import AppList from '@/views/app-list/index.vue'
 import ChatList from "@/views/deepseek/chat-list.vue";
-import DeepSeek from '@/views/deepseek/index.vue'
+import DeepSeek from '@/views/deepseek/chat.vue'
 import { useChat } from "@/stores/userChat.ts";
 
 const { activeChatId } = useChat()

@@ -95,11 +95,11 @@ function changeChat(item: HistoryChatMessageType) {
 }
 
 async function removeChatItem(item: HistoryChatMessageType) {
-  const { appId } = getConfig()
+  const appConfig = getConfig()
   const result: any = await getPaginationRecords({
     offset: 0,
     pageSize: 20,
-    appId: appId,
+    appId: appConfig.appId,
     chatId: activeChatId.value,
   })
   if (result.data.total === 0) return;
@@ -135,10 +135,10 @@ function formatterTime2shortText(time: number) {
 }
 
 async function getChatList() {
-  const { appId } = getConfig()
+  const appConfig = getConfig()
   setLoading(true)
   const result: any = await getHistories({
-    appId,
+    appId: appConfig.appId,
     "offset": 0,
     "pageSize": 20,
     "source": "api"

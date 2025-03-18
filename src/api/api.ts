@@ -75,8 +75,8 @@ export async function updateHistory(data: Object) {
 // 清空历史记录
 export async function delHistory(chatId: string) {
   return new Promise((resolve) => {
-    const { appId } = getConfig()
-    axios.delete(`/api/core/chat/delHistory?appId=${appId}&chatId=${chatId}`, { headers: getHeader() }).then((response) => {
+    const appConfig = getConfig()
+    axios.delete(`/api/core/chat/delHistory?appId=${appConfig.appId}&chatId=${chatId}`, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
       } else {
@@ -92,8 +92,8 @@ export async function delHistory(chatId: string) {
 // 清空历史记录
 export async function clearHistories() {
   return new Promise((resolve) => {
-    const { appId } = getConfig()
-    axios.delete(`/api/core/chat/clearHistories?appId=${appId}`, { headers: getHeader() }).then((response) => {
+    const appConfig = getConfig()
+    axios.delete(`/api/core/chat/clearHistories?appId=${appConfig.appId}`, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
       } else {

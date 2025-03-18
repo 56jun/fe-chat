@@ -1,7 +1,7 @@
 import { useRoute } from 'vue-router'
 import { reactive } from "vue";
 
-const appConfig = reactive({
+const appConfig = window.appConfig = reactive({
   apiKey: '',
   appId: '',
   appName: ''
@@ -15,16 +15,14 @@ export function getConfig() {
     appName: '写作助手',
   }
   for (const key in appConfig) {
-    if (route.query[key]) {
-      appConfig[key] = route.query[key] || DEFAULT[key]
-    }
+    appConfig[key] = route?.query?.[key] || DEFAULT[key]
   }
   return appConfig;
 }
 
 export function getHeader() {
-  const { apiKey } = getConfig()
+  const appConfig = getConfig()
   return {
-    Authorization: `Bearer ${apiKey}`
+    Authorization: `Bearer ${appConfig.apiKey}`
   }
 }

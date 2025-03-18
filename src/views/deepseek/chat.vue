@@ -133,7 +133,7 @@ import { useChat } from "@/stores/userChat.ts";
 import { streamFetch } from "@/utils/chat-fetch.ts";
 
 const { activeChatId, message } = useChat()
-const { appId } = getConfig()
+const appConfig = getConfig()
 
 const getChatList = inject('getChatList')
 const needUpdateParentChatListTitle = ref(false)
@@ -237,7 +237,8 @@ async function sendMessageChat() {
     // model: 'deepseek-chat',
     // model: 'deepseek-ai/DeepSeek-V3',
     stream: true,
-    detail: false,// 是否返回中间值（模块状态，响应的完整结果等），stream 模式下会通过 event 进行区分，非 stream 模式结果保存在 responseData 中。
+    // 是否返回中间值（模块状态，响应的完整结果等），stream 模式下会通过 event 进行区分，非 stream 模式结果保存在 responseData 中。
+    detail: true,
     // 聊天输入框上面的tab切换内容部分
     ...configParams,
   };
@@ -430,7 +431,7 @@ watch(() => activeChatId?.value, async (val) => {
   const result: any = await getPaginationRecords({
     offset: 0,
     pageSize: 20,
-    appId: appId,
+    appId: appConfig.appId,
     chatId: val,
   })
   message.value = (result?.data?.list || []).map((item: any) => {
