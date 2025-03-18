@@ -2,7 +2,7 @@
   <div class="chat-list">
     <div class="flex align-center">
       <el-icon style="font-size: 20px; color: #4772e1;"><Platform /></el-icon>
-      <div class="chat-list__app-name">写作助手</div>
+      <div class="chat-list__app-name">{{ appConfig.appName }}</div>
     </div>
     <div class="chat-list__chat-config">
       <el-button @click="newChat()" class="chat-list__chat-config__new-chat" :icon="ChatDotRound" round>新对话</el-button>
@@ -55,19 +55,20 @@ import moment from "moment/moment";
 
 const { setLoading, activeChatId, history, setActiveChatId, clearChatHistory, message } = useChat()
 
+const appConfig = getConfig()
+
 async function clearChatList() {
   await clearChatHistory()
   getChatList()
 }
 
 async function newChat(force: boolean = false) {
-  const { appId } = getConfig()
   if (!force) {
     setLoading(true)
     const result: any = await getPaginationRecords({
       offset: 0,
       pageSize: 20,
-      appId: appId,
+      appId: appConfig.appId,
       chatId: activeChatId.value,
     })
     setLoading(false)
@@ -77,7 +78,7 @@ async function newChat(force: boolean = false) {
   }
   const chatId = guid()
   const newChatItem = {
-    appId,
+    appId: appConfig.appId,
     chatId,
     customTitle: '',
     title: '新对话',
