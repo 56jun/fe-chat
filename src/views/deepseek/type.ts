@@ -1,4 +1,4 @@
-type HistoryChatMessageType = {
+export type HistoryChatMessageType = {
   appId: string
   chatId: string
   customTitle: string
@@ -8,17 +8,17 @@ type HistoryChatMessageType = {
   type?: string
 }
 
-type ChatMessageType = {
+export type ChatMessageType = {
   role: 'user' | 'assistant';
   content: { type: string; name: string; url: string, text?: string }[] | string;
   html?: string;
-  progress?: string;// preThinking/outputing/done
+  progress: string;// preThinking/outputing/done
   answer?: any;
   hide?: boolean;// 是否收起展开思考过程
   [key: string]: any;
 }
 
-enum SseResponseEventEnum {
+export enum SseResponseEventEnum {
   fastAnswer = 'fastAnswer',
   answer = 'answer',
   interactive = 'interactive',
@@ -28,16 +28,19 @@ enum SseResponseEventEnum {
   flowNodeStatus = 'flowNodeStatus',
   flowResponses = 'flowResponses',
   updateVariables = 'updateVariables',
-  error = 'error'
+  error = 'error',
+  done = 'done'
 }
 
-type ResponseQueueItemType =
+export type ResponseQueueItemType =
   | {
   event: SseResponseEventEnum.fastAnswer | SseResponseEventEnum.answer;
   text?: string;
   reasoningText?: string;
 }
   | { event: SseResponseEventEnum.interactive; [key: string]: any }
+  | { event: SseResponseEventEnum.flowNodeStatus; name: string; [key: string]: any }
+  | { event: SseResponseEventEnum.done; [key: string]: any }
   | {
   event:
     | SseResponseEventEnum.toolCall

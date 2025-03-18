@@ -4,6 +4,8 @@ import {
   EventStreamContentType,
   fetchEventSource
 } from '@fortaine/fetch-event-source';
+import { SseResponseEventEnum } from "@/views/deepseek/type.ts";
+import type { ResponseQueueItemType } from "@/views/deepseek/type.ts";
 
 const formatTime2YMDHMW = (): string => {
   return moment().format('YYYY-MM-DD HH:mm:ss');
@@ -58,37 +60,10 @@ type StreamResponseType = {
   [DispatchNodeResponseKeyEnum.nodeResponse]: any[];
 };
 
-enum SseResponseEventEnum {
-  fastAnswer = 'fastAnswer',
-  answer = 'answer',
-  interactive = 'interactive',
-  toolCall = 'toolCall',
-  toolParams = 'toolParams',
-  toolResponse = 'toolResponse',
-  flowNodeStatus = 'flowNodeStatus',
-  flowResponses = 'flowResponses',
-  updateVariables = 'updateVariables',
-  error = 'error',
-  done = 'done'
-}
-
-type ResponseQueueItemType =
-  | {
-  event: SseResponseEventEnum.fastAnswer | SseResponseEventEnum.answer | SseResponseEventEnum.done;
-  text?: string;
-  reasoningText?: string;
-}
-  | { event: SseResponseEventEnum.interactive; [key: string]: any }
-  | {
-  event:
-    | SseResponseEventEnum.toolCall
-    | SseResponseEventEnum.toolParams
-    | SseResponseEventEnum.toolResponse;
-  [key: string]: any;
-};
 
 const getWebReqUrl = (url: string = '') => {
   if (!url) return '/';
+  // @ts-ignore
   const baseUrl = import.meta.VITE_BASE_URL || '';
   if (!baseUrl) return url;
 
@@ -98,7 +73,7 @@ const getWebReqUrl = (url: string = '') => {
 
 class FatalError extends Error {}
 
-export const streamFetch = async ({ url = '/api/v1/chat/completions', data, apiKey, onMessage, abortCtrl }: StreamFetchProps): Promise<StreamResponseType> => {
+export const streamFetch = async ({ url = '/api/v1/chat/completions', data, apiKey, onMessage, abortCtrl }: StreamFetchProps): Promise<StreamResponseType | undefined> => {
   const timeoutId = setTimeout(() => {
     abortCtrl.abort('Time out');
   }, 60000);
@@ -304,7 +279,7 @@ export const streamFetch = async ({ url = '/api/v1/chat/completions', data, apiK
           throw err;
         }
         clearTimeout(timeoutId);
-        failedFinish(getErrText(err));
+        failedFinish(getErrText(err, '请求失败'));
       },
       openWhenHidden: true
     });
@@ -313,7 +288,7 @@ export const streamFetch = async ({ url = '/api/v1/chat/completions', data, apiK
 
     if (abortCtrl.signal.aborted) {
       finished = true;
-      return;
+      return {nodeResponse: [], responseText: ''};
     }
 
     failedFinish(err);

@@ -1,12 +1,13 @@
 import { ref } from 'vue'
 import { clearHistories } from "@/api/api.ts";
 import { ElMessage } from "element-plus";
+import type { HistoryChatMessageType, ChatMessageType } from '@/views/deepseek/type.ts'
 
 
 const activeChatId = ref<string>('')
 const chatList = ref<HistoryChatMessageType[]>([])
 const loading = ref<boolean>(false)
-const message = window.message = ref<ChatMessageType[]>([])
+const message = ref<ChatMessageType[]>([])
 
 export const useChat = () => {
 

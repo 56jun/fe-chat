@@ -52,6 +52,7 @@ import { ElMessage } from "element-plus";
 import { getConfig } from "@/stores/config.ts";
 import { guid } from "@/utils/config.ts";
 import moment from "moment/moment";
+import type { HistoryChatMessageType } from "@/views/deepseek/type.ts";
 
 const { setLoading, activeChatId, history, setActiveChatId, clearChatHistory, message } = useChat()
 
@@ -106,7 +107,7 @@ async function removeChatItem(item: HistoryChatMessageType) {
   const res = await delHistory(item.chatId)
   if (!res) return;
   ElMessage.success('操作成功')
-  const index = history.value.findIndex(x => x.chatId === item.chatId)
+  const index = history.value.findIndex((x) => x.chatId === item.chatId)
   if (index === -1) return;
   history.value.splice(index, 1)
   setActiveChatId(history.value[0]?.chatId)

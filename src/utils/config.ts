@@ -125,6 +125,7 @@ export function throttle(fn: Function, wait: number) {
   let firstInvoke = true;
 
   function throttled() {
+    // @ts-ignore
     let context = this as any;
     let args = arguments;
 

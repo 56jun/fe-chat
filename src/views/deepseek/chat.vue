@@ -131,6 +131,8 @@ import CloseTag from "@/assets/close-tag.png";
 import { getConfig } from "@/stores/config.ts";
 import { useChat } from "@/stores/userChat.ts";
 import { streamFetch } from "@/utils/chat-fetch.ts";
+import { SseResponseEventEnum } from "@/views/deepseek/type.ts";
+import type { ChatMessageType, ResponseQueueItemType } from "@/views/deepseek/type.ts";
 
 const { activeChatId, message } = useChat()
 const appConfig = getConfig()
@@ -147,7 +149,7 @@ const toDealwith: {
   reasonContent: string
   reasonIndex: number
   reset: () => void
-} = window.toDealwith = {
+} = {
   index: 0,
   task: '',
   reasonContent: '',
@@ -208,7 +210,7 @@ async function sendMessageChat() {
 
   const { apiKey, ...configParams } = getConfig() || {}
 
-  let messageItem: ChatMessageType = { role: 'user', content: form.question }
+  let messageItem: ChatMessageType = { role: 'user', content: form.question, progress: '' }
   if (fileList.value.length > 0) {
     const fileMessageList = fileList.value.map(x => {
       // @ts-ignore
@@ -291,19 +293,19 @@ function onMessage(msg: ResponseQueueItemType) {
       lastItem.responseText = 'AI 对话'
       lastItem.progress = 'outputing'
       lastItem.content += (msg.text || '')
-      lastItem.html = marked.parse(lastItem.content || '')
+      lastItem.html = marked.parse((lastItem.content as string) || '') as string
     }
     if (isAutoScroll.value) {
       scrollToBottom()
     }
-  } else if (msg.event === 'flowNodeStatus') {
+  } else if (msg.event === SseResponseEventEnum.flowNodeStatus) {
     lastItem.progress = 'preThinking'
     let name = msg.name
     if (name === "workflow:template.ai_chat") {
       name = 'AI 对话'
     }
     lastItem.responseText = name || ''
-  } else if (msg.event === 'done') {
+  } else if (msg.event === SseResponseEventEnum.done) {
     console.log('---DONE---', msg)
     loading.value = false;
     abortController.value = null;
@@ -408,10 +410,10 @@ async function onChange(file: File) {
   })
 }
 
-const scrollToBottom = throttle((noSmooth = false) => {
+const scrollToBottom = throttle(() => {
   // bottomLineRef.value.scrollTop = 0
   bottomLineRef.value?.scrollIntoView({
-    behavior: !noSmooth ? 'smooth' : 'instant',
+    behavior: 'smooth',
     block: 'end',
   })
 }, 25)
@@ -448,6 +450,7 @@ watch(() => activeChatId?.value, async (val) => {
         content: content,
         html: marked.parse(content) as string,
         hide: false,
+        progress: 'done',
       }
       if (reasoningContentIndex > -1) {
         const reasonContent = item.value[reasoningContentIndex].reasoning.content
@@ -476,7 +479,7 @@ watch(() => activeChatId?.value, async (val) => {
     }
   })
   needUpdateParentChatListTitle.value = message.value.length === 0
-  scrollToBottom(true)
+  scrollToBottom()
 }, { immediate: true })
 
 
