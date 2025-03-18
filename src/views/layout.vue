@@ -5,7 +5,8 @@
     <div class="chat-wrapper">
       <ChatList/>
       <div v-if="activeChatId" class="chat-detail">
-        <DeepSeek/>
+        <router-view/>
+<!--        <DeepSeek/>-->
       </div>
     </div>
   </div>
@@ -34,19 +35,22 @@ const { activeChatId } = useChat()
     border-right: 1px solid #E2E8F0;
   }
   &__app-chat {
+    width: calc(100% - 32px);
     padding: 16px;
     flex-grow: 1;
     .chat-wrapper {
       width: 100%;
       height: 100%;
       display: flex;
+      flex-direction: row;
       padding-left: 20px;
       background-color: white;
       border-radius: 16px;
       border: 1px solid #DFE2EA;
       overflow: hidden;
       .chat-detail {
-        flex-grow: 1;
+        width: calc(100% - 316px);
+        //flex: 1;
       }
     }
   }

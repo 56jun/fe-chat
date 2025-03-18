@@ -2,11 +2,12 @@
   <div class="chat-list">
     <div class="flex align-center">
       <el-icon style="font-size: 20px; color: #4772e1;"><Platform /></el-icon>
-      <div class="chat-list__app-name">公文助手</div>
+      <div class="chat-list__app-name">写作助手</div>
     </div>
     <div class="chat-list__chat-config">
       <el-button @click="newChat()" class="chat-list__chat-config__new-chat" :icon="ChatDotRound" round>新对话</el-button>
-      <el-popconfirm @confirm="clearChatHistory"
+      <el-popconfirm @confirm="clearChatList"
+                     width="220"
                      title="确认删除所有聊天记录？"
                      confirm-button-text="确认"
                      cancel-button-text="取消"
@@ -24,15 +25,18 @@
         <el-icon size="18"><ChatDotRound/></el-icon>
         <div class="chat-list__chat-history-list__name show-lines-1">{{ item.title }}</div>
         <div class="chat-list__chat-history-list__time">{{ formatterTime2shortText(item.updateTime) }}</div>
-        <el-dropdown @command="(type: string) => command(type, item)" :teleported="false" class="chat-list__chat-history-list__dropdown" placement="bottom-end">
-          <el-button :icon="MoreFilled" size="small" style="padding: 0 4px; height: 20px;"></el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <!--                  <el-dropdown-item command="title">自定义标题</el-dropdown-item>-->
-              <el-dropdown-item command="delete" class="hover-danger" :icon="Delete">删除</el-dropdown-item>
-            </el-dropdown-menu>
+        <el-popover
+          title=""
+          :width="100"
+          trigger="hover"
+        >
+          <template #reference>
+            <el-button :icon="MoreFilled" size="small" class="chat-list__chat-history-list__config__button" style="padding: 0 4px; height: 20px;"></el-button>
           </template>
-        </el-dropdown>
+          <ul class="chat-list__chat-history-list__config">
+            <li @click="removeChatItem(item)" class="hover-danger">删除</li>
+          </ul>
+        </el-popover>
       </li>
     </ul>
   </div>
@@ -49,16 +53,11 @@ import { getConfig } from "@/stores/config.ts";
 import { guid } from "@/utils/config.ts";
 import moment from "moment/moment";
 
-const { setLoading, activeChatId, history, setActiveChatId } = useChat()
+const { setLoading, activeChatId, history, setActiveChatId, clearChatHistory, message } = useChat()
 
-async function clearChatHistory() {
-  setLoading(true)
-  const res = await clearHistories()
-  setLoading(false)
-  if (!res) return;
-  ElMessage.success('操作成功')
-  history.value = []
-  newChat()
+async function clearChatList() {
+  await clearChatHistory()
+  getChatList()
 }
 
 async function newChat(force: boolean = false) {
@@ -72,7 +71,9 @@ async function newChat(force: boolean = false) {
       chatId: activeChatId.value,
     })
     setLoading(false)
-    if (result.data.total === 0) return;
+    if (result.data.total === 0) {
+      return;
+    }
   }
   const chatId = guid()
   const newChatItem = {
@@ -107,12 +108,9 @@ async function removeChatItem(item: HistoryChatMessageType) {
   const index = history.value.findIndex(x => x.chatId === item.chatId)
   if (index === -1) return;
   history.value.splice(index, 1)
-  setActiveChatId(history.value[0].chatId)
-}
-
-function command(commandValue: string, item: HistoryChatMessageType) {
-  if (commandValue === 'delete') {
-    removeChatItem(item)
+  setActiveChatId(history.value[0]?.chatId)
+  if(history.value.length === 0) {
+    newChat(true)
   }
 }
 
@@ -194,6 +192,8 @@ onMounted(getChatList)
     fill: currentcolor;
   }
   &__chat-history-list {
+    max-height: calc(100% - 110px);
+    overflow: auto;
     li {
       justify-content: space-between;
       padding: 11px;
@@ -213,7 +213,7 @@ onMounted(getChatList)
         .chat-list__chat-history-list__time {
           display: none;
         }
-        .chat-list__chat-history-list__dropdown {
+        .chat-list__chat-history-list__config__button {
           display: block;
         }
       }
@@ -234,9 +234,22 @@ onMounted(getChatList)
       flex-grow: 0;
       transition: all .3s;
     }
-    &__dropdown {
+    &__config__button {
       transition: all .3s;
       display: none;
+    }
+    &__config {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      li {
+        cursor: pointer;
+        padding: 4px 20px;
+        &:hover {
+          background-color: #F0F4FF;
+          color: #3370FF;
+        }
+      }
     }
   }
 }

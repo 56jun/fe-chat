@@ -30,33 +30,33 @@
             </div>
           </div>
 
-          <div v-if="item.role === 'assistant' && (item.html || item.reasoning_content)" class="answer-content__assistant">
+          <div v-if="item.role === 'assistant'" class="answer-content__assistant">
             <div class="flex align-center">
-              <img src="../../assets/robot-icon.png" class="robot-bg" alt="icon"></img>
-              <div class="answer-content__assistant__config-bar">
+              <img src="../../assets/robot-icon.png" class="robot-bg" alt="icon"/>
+              <div v-if="['preThinking', 'outputing'].includes(item.progress)"
+                   style="display: flex; justify-content: flex-start; align-items: center;margin-left: 10px">
+                <el-icon class="is-loading" style="font-size: 22px">
+                  <Loading/>
+                </el-icon>
+                <span>&nbsp;{{ item.responseText || '思考中' }}...</span>
+              </div>
+              <div v-else class="answer-content__assistant__config-bar">
                 <el-icon @click="copyText((item.content as string) || item.html)"><CopyDocument /></el-icon>
               </div>
             </div>
-            <div class="answer-item" :id="'answerBox' + index">
+            <div v-if="item.progress !== 'preThinking'" class="answer-item" :id="'answerBox' + index">
               <div v-if="item.reasoning_content" class="answer-item__reasoning">
                 <div class="answer-item__reasoning__title" @click="() => item.hide = !item.hide">
-<!--                  <el-icon><Smoking /></el-icon>-->
                   <span>&nbsp;&nbsp;思考过程&nbsp;&nbsp;</span>
                   <el-icon><ArrowDown v-show="item.hide" /><ArrowUp v-show="!item.hide" /></el-icon>
                 </div>
                 <div class="answer-item__reasoning__content" :class="{ 'hide': item.hide }" v-html="item.reasoning_content"></div>
               </div>
               <div v-if="item.html" v-html="item.html" class="markdown-body select-text"></div>
+              <div v-else>&nbsp;</div>
             </div>
           </div>
         </template>
-        <div v-if="loading || progress === 'preThinking'"
-             style="display: flex; justify-content: flex-start; align-items: center;">
-          <image src="../../assets/robot-icon.png" class="robot-bg"></image>
-          <el-icon class="is-loading" style="font-size: 22px">
-            <Loading/>
-          </el-icon>&nbsp;思考中...
-        </div>
       </div>
       <div ref="bottomLineRef"></div>
     </div>
@@ -98,13 +98,13 @@
         </div>
         <div class="send-button"
              :class="{
-                'disabled':loading || isAutoProceed || !form.question,
-                'has-stop': outputState
+                'disabled':loading || !form.question,
+                'has-stop': progressGlobal !== 'done'
               }"
         >
-          <img v-show="outputState" @click="stopResponse" class="send-button--stop" :src="stopSvg"
+          <img v-show="progressGlobal !== 'done'" @click="stopResponse" class="send-button--stop" :src="stopSvg"
                alt="">
-          <img v-show="!outputState" @click="fetchStreamingResponse" class="send-button--send"
+          <img v-show="progressGlobal === 'done'" @click="sendMessageChat" class="send-button--send"
                :src="sendImg" alt="">
         </div>
       </div>
@@ -113,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, nextTick, watch, inject } from "vue";
+import { ref, reactive, onMounted, onUnmounted, nextTick, watch, inject, computed } from "vue";
 import { ElInput, ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
 import FileIcon from "./file-icon.vue";
@@ -130,8 +130,9 @@ import CloseTag from "@/assets/close-tag.png";
 
 import { getConfig } from "@/stores/config.ts";
 import { useChat } from "@/stores/userChat.ts";
+import { streamFetch } from "@/utils/chat-fetch.ts";
 
-const { activeChatId, setActiveChatId } = useChat()
+const { activeChatId, message } = useChat()
 const { appId } = getConfig()
 
 const getChatList = inject('getChatList')
@@ -162,27 +163,25 @@ const toDealwith: {
 const bottomLineRef = ref()
 const answerBoxRef = ref()
 const loading = ref(false)
-const outputState = ref(false)
 const uploadLoading = ref(false)
 const answerStartRender = ref(false)
 const reasoningAnswerDone = ref(false)
 const customUid = ref('SongFei')
-const progress = ref('done')
+const progressGlobal = computed(() => {
+  const item = message.value[message.value.length - 1]
+  return item?.progress || 'done'
+})
 const dataCache = ref<any[]>([])
 const compositionInputStatus = ref(false)
 const form = reactive({
   question: '',
 })
-const message = window.message = ref<ChatMessageType[]>([])
+// const message = window.message = ref<ChatMessageType[]>([])
 const messages = ref<ChatMessageType[]>([])
 const fileList = ref<(File | {name: string, url: string})[]>([])
-const activeTag = ref('todo')
-const responseText = ref('')
+// const responseText = ref('')
 const isAutoScroll = ref(true)
-const isAutoProceed = ref(false)
 const abortController = ref<null | AbortController>(null)
-const msgType = ref(null)
-const messageText = ref(null)
 
 function onScroll() {
   // @ts-ignore
@@ -194,15 +193,15 @@ function keyDownEnter(event: Event | KeyboardEvent) {
   if ("shiftKey" in event && event.shiftKey) return;
   if (compositionInputStatus.value) return;
   event.preventDefault();
-  if (isAutoProceed.value || progress.value === 'outputing') {
+  if (progressGlobal.value === 'outputing') {
     ElMessage.warning('请先停止上一轮对话')
     return
   }
-  fetchStreamingResponse();
+  sendMessageChat();
 }
 
-async function fetchStreamingResponse() {
-  if (loading.value || !form.question || outputState.value) {
+async function sendMessageChat() {
+  if (loading.value || !form.question || ['preThinking', 'outputing'].includes(progressGlobal.value)) {
     return false;
   }
   const url = DEEPSEEK_API_URL + '/v1/chat/completions';
@@ -234,22 +233,28 @@ async function fetchStreamingResponse() {
     customUid: customUid.value,// 自定义的用户 ID。在历史记录中，该条记录的使用者会显示为 xxxxxx
     // 替换为实际的请求参数
     // prompt: this.form.question,
-    messages: messages.value,
+    messages: [{ ...messageItem }],
     // model: 'deepseek-chat',
     // model: 'deepseek-ai/DeepSeek-V3',
     stream: true,
-    detail: true,// 是否返回中间值（模块状态，响应的完整结果等），stream 模式下会通过 event 进行区分，非 stream 模式结果保存在 responseData 中。
+    detail: false,// 是否返回中间值（模块状态，响应的完整结果等），stream 模式下会通过 event 进行区分，非 stream 模式结果保存在 responseData 中。
     // 聊天输入框上面的tab切换内容部分
     ...configParams,
   };
   try {
-    message.value.push({ role: 'assistant', content: '思考中...', html: '', reasoning_content: '', hide: false });
+    message.value.push({
+      role: 'assistant',
+      content: '',
+      html: '',
+      reasoning: '',
+      reasoning_content: '',
+      progress: 'preThinking',
+      hide: false
+    });
     loading.value = true;
-    let content = '', reasoningContent = '';
     answerStartRender.value = false;
     reasoningAnswerDone.value = false;
     form.question = '';
-    isAutoProceed.value = true;
     isAutoScroll.value = true;
     scrollToBottom()
 
@@ -258,123 +263,51 @@ async function fetchStreamingResponse() {
     // 创建 AbortController 实例
     abortController.value = new AbortController();
 
-    const response = await axios
-      .post(url, params, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${ apiKey }`, // 替换为实际的 API 密钥
-        },
-        signal: abortController.value?.signal, // 绑定 AbortController 的信号
-        onDownloadProgress: progressEvent => {
-          loading.value = false;
-          const chunk = progressEvent.event.target.responseText;
-          responseText.value += chunk;
-          if (chunk.indexOf('keep-alive') == -1) {
-            // 返回流去除已处理的数据，然后继续处理剩下的数据
-            let data = chunk.split('data:');
-            // data.splice(0, dataCache.value.length);
-            data.splice(0, dataResponseTimes);
-            if (data.length > 0) {
-              data.forEach((val: string) => {
-                // if (val.includes('event:')) {
-                //   progress.value = 'preThinking'
-                //   const stepsName = val.match(/event: (\S*)\n/)?.[1]
-                //   if (stepsName) {
-                //     currentStepName = stepsName
-                //   }
-                // } else if (!['fastAnswer', 'answer', 'flowResponses'].includes(currentStepName)) {
-                //   const name = JSON.parse(val || '{}').name
-                //   message.value[message.value.length - 1].content = name + '...'
-                // } else
-                if (val.length > 0 && val.indexOf('[DONE]') == -1) {
-                  progress.value = 'preThinking'
-                  try {
-                    let markdownReasoningText: string = JSON.parse(val).choices[0].delta.reasoning_content || "";
-                    let markdownText: string = JSON.parse(val).choices[0].delta.content || "";
-                    // 有回答内容就更新状态
-                    if (markdownReasoningText || markdownText) {
-                      dataResponseTimes++;
-                      if (!outputState.value) outputState.value = true
-                      if (progress.value !== 'outputing') progress.value = 'outputing'
+    streamFetch({
+      url,
+      data: params,
+      onMessage,
+      abortCtrl: abortController.value,
+      apiKey
+    }).catch((err) => {
+      console.error(err)
+    })
+  } catch (e) {
 
-                      // 思考中
-                      if (markdownReasoningText) {
-                        const needStartReasonRender = toDealwith.reasonContent.length === toDealwith.reasonIndex
-                        reasoningContent += markdownReasoningText
-                        message.value[message.value.length - 1].reasoning = reasoningContent;
-                        let htmlReasonContent = marked.parse(reasoningContent);
-                        if (htmlReasonContent) {
-                          toDealwith.reasonContent = htmlReasonContent as string
-                          if (needStartReasonRender) {
-                            renderReasonResponse()
-                          }
-                        }
-                      }
-                      // 答案
-                      if (markdownText) {
-                        const needStartRender = toDealwith.task.length === toDealwith.index
-                        dataCache.value.push(markdownText);
-                        content = content + markdownText;
-                        if (content.startsWith('```markdown')) {
-                          content = content.replace(/```markdown/g, '');
-                          toDealwith.index = 0
-                        }
-                        message.value[message.value.length - 1].content = content;
-                        let htmlContent = marked.parse(content);
-                        if (htmlContent) {
-                          reasoningAnswerDone.value = true
-                        }
-                        toDealwith.task = htmlContent as string
-                        if (needStartRender && answerStartRender.value) {
-                          renderResponse()
-                        }
-                      }
-                    }
+  }
+}
 
-                  } catch (e) {
-                    console.error(e)
-                  }
-                } else {
-                  dataCache.value.push('');
-                }
-              });
-            }
-          } else {
-            message.value.push({
-              role: 'assistant',
-              // @ts-ignore
-              content: dataCache.value.choices?.[0].message.content || ''
-            });
-          }
-        },
-      })
-      .then(res => {
-        loading.value = false;
-        message.value[message.value.length - 1].content = content;
-        if (content) {
-          messages.value.push({
-            role: 'assistant',
-            content,
-          })
-        }
-        loading.value = false;
-        abortController.value = null;
-      });
-  } catch (error) {
-    console.error('Error:', error);
-    isAutoProceed.value = false;
-    loading.value = false;
-    console.log('catch');
-  } finally {
-    isAutoProceed.value = false;
-    loading.value = false;
-    outputState.value = false;
-    abortController.value = null;
-    progress.value = 'done'
-    if (needUpdateParentChatListTitle.value) {
-      (getChatList as Function)();
-      needUpdateParentChatListTitle.value = false
+function onMessage(msg: ResponseQueueItemType) {
+  const lastItem: ChatMessageType = message.value[message.value.length - 1]
+
+  if (['fastAnswer', 'answer'].includes(msg.event)) {
+    if (msg.reasoningText) {
+      lastItem.responseText = 'AI 对话'
+      lastItem.progress = 'outputing'
+      lastItem.reasoning += (msg.reasoningText || '')
+      lastItem.reasoning_content = marked.parse(lastItem.reasoning)
+    } else if(msg.text) {
+      lastItem.responseText = 'AI 对话'
+      lastItem.progress = 'outputing'
+      lastItem.content += (msg.text || '')
+      lastItem.html = marked.parse(lastItem.content || '')
     }
+    if (isAutoScroll.value) {
+      scrollToBottom()
+    }
+  } else if (msg.event === 'flowNodeStatus') {
+    lastItem.progress = 'preThinking'
+    let name = msg.name
+    if (name === "workflow:template.ai_chat") {
+      name = 'AI 对话'
+    }
+    lastItem.responseText = name || ''
+  } else if (msg.event === 'done') {
+    console.log('---DONE---', msg)
+    loading.value = false;
+    abortController.value = null;
+    lastItem.responseText = ''
+    lastItem.progress = 'done'
     console.log('finally');
   }
 }
@@ -475,6 +408,7 @@ async function onChange(file: File) {
 }
 
 const scrollToBottom = throttle((noSmooth = false) => {
+  // bottomLineRef.value.scrollTop = 0
   bottomLineRef.value?.scrollIntoView({
     behavior: !noSmooth ? 'smooth' : 'instant',
     block: 'end',
@@ -504,6 +438,10 @@ watch(() => activeChatId?.value, async (val) => {
       const contentIndex = item.value.findIndex((x: any) => x.type === 'text')
       const reasoningContentIndex = item.value.findIndex((x: any) => x.type === 'reasoning')
       let content = item.value[contentIndex].text.content
+      // if (content.startsWith('```markdown')) {
+      //   content = content.replace(/```markdown/g, '');
+      //   toDealwith.index = 0
+      // }
       const resultItem: ChatMessageType = {
         role: 'assistant',
         content: content,
@@ -542,7 +480,7 @@ watch(() => activeChatId?.value, async (val) => {
 
 
 onMounted(() => {
-  message.value.push({ role: 'assistant', html: '您好，我是高新区任务督办小助手，可以精准查询项目进展情况，也可以做一些统计分析，欢迎向我提问！' } as ChatMessageType);
+  // message.value.push({ role: 'assistant', html: '您好，我是高新区任务督办小助手，可以精准查询项目进展情况，也可以做一些统计分析，欢迎向我提问！' } as ChatMessageType);
   (document.querySelector('.answer-box') as Element).addEventListener('scroll', onScroll);
   nextTick(scrollToBottom)
 })
@@ -557,7 +495,7 @@ onUnmounted(() => {
 
 
 .deepseek {
-  width: 100%;
+  //width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -583,7 +521,7 @@ onUnmounted(() => {
 
     .answer-content {
       &__assistant {
-        max-width: calc(100% - 80px);
+        max-width: calc(100% - 180px);
         padding: 12px;
         margin-left: 7px;
         margin-bottom: 10px;
@@ -663,6 +601,10 @@ onUnmounted(() => {
       color: #000;
       font-size: 14px;
       border-radius: 0px 8px 8px;
+      :deep(code) {
+        white-space: normal;
+        word-break: break-all;
+      }
       &__reasoning {
         max-width: 100%;
         &__title {
@@ -695,10 +637,6 @@ onUnmounted(() => {
             }
           }
         }
-      }
-      :deep(code) {
-        white-space: normal;
-        word-break: break-all;
       }
     }
   }
@@ -845,6 +783,7 @@ onUnmounted(() => {
         }
 
         &--stop {
+          cursor: pointer;
           height: 25px;
         }
       }

@@ -1,21 +1,18 @@
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
-import DeepSeek from '../views/deepseek/index.vue'
+import Chat from '../views/deepseek/chat.vue'
 
 const router = createRouter({
-  history: createWebHashHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
       // name: 'home',
-      redirect: '/deepseek',
+      redirect: '/chat',
     },
     {
-      path: '/deepseek',
-      name: 'deepseek',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: DeepSeek,
+      path: '/chat',
+      name: 'chat',
+      component: Chat,
     },
   ],
 })
