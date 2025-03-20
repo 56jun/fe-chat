@@ -36,6 +36,8 @@ export namespace ChatType {
     role: 'assistant'
     // waiting|preThinking|outputting|done
     progress: 'init' | 'preThinking' | 'outputting' | 'done'
+    userGoodFeedback?: string | undefined
+    userBadFeedback?: string | undefined
     // 模型返回列表
     value: ResponseAnswerItemType[]
     [key: string]: any

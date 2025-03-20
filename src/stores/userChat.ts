@@ -1,6 +1,6 @@
 import { ref, onUnmounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { clearHistories } from "@/api/api.ts";
-import { ElMessage } from "element-plus";
 import { type ChatType } from "@/type/chat.ts"
 
 

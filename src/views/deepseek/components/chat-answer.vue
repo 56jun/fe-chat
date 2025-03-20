@@ -9,11 +9,24 @@
         </el-icon>
         <span>&nbsp;{{ item.responseText || '思考中' }}...</span>
       </div>
-      <div v-else class="answer-content__assistant__config-bar">
-        <el-icon @click="copyText">
-          <CopyDocument/>
-        </el-icon>
-      </div>
+      <ul v-else class="reset-style answer-content__assistant__config-bar">
+        <li><el-icon @click="copyText"><CopyDocument/></el-icon></li>
+        <li @click="likeOrDislike('Y')"
+            v-if="!item.userBadFeedback"
+            class="success"
+            :class="{ active: item.userGoodFeedback }"
+        >
+          <svg-icon icon-class="like" font-size="18"></svg-icon>
+        </li>
+        <li @click="likeOrDislike('N')"
+            v-if="!item.userGoodFeedback"
+            class="danger"
+            :class="{ active: item.userBadFeedback }"
+        >
+          <svg-icon icon-class="like" font-size="18" style="transform: rotateX(180deg)"></svg-icon>
+        </li>
+      </ul>
+      <div class="timer">{{ formatTime2shortText(item.time) }}</div>
     </div>
     <div v-if="item.progress !== 'preThinking'" class="answer-item">
       <div v-for="(responseItem, responseIndex) in item.value" :key="`${responseIndex}`">
@@ -57,16 +70,22 @@
 
 <script lang="ts" setup>
 import { defineProps, defineEmits } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
 import { copyDomText } from "@/utils/config.ts";
-import { ElMessage } from "element-plus";
 import { type ChatType } from "@/type/chat.ts";
+import SvgIcon from "@/components/SvgIcon/index.vue";
+import { getConfig } from "@/stores/config.ts";
+import { updateUserFeedback } from "@/api/api.ts";
+import { formatTime2shortText } from "@/utils/index.ts";
+
 
 const props = defineProps<{
   item: ChatType.ChatMessageType,
+  activeChatId: string,
 }>()
 
-const emits = defineEmits(['directReport'])
+const emits = defineEmits(['updateFeedback'])
 
 function copyText() {
   const text = props.item.value?.map((x: ChatType.ResponseAnswerItemType) => {
@@ -78,9 +97,54 @@ function copyText() {
   }
 }
 
+async function likeOrDislike(type: 'Y' | 'N') {
+  const appConfig = getConfig()
+  const params: {
+    appId: string
+    chatId: string
+    dataId: string
+    // 取消点赞时不填此参数
+    userGoodFeedback?: string
+    // 取消踩时不填此参数
+    userBadFeedback?: string
+  } = {
+    appId: appConfig.appId,
+    chatId: props.activeChatId,
+    dataId: props.item.dataId,
+    // // 取消点赞时不填此参数
+    // userGoodFeedback: undefined,
+    // // 取消踩时不填此参数
+    // userBadFeedback: undefined,
+  }
+  if (type === 'Y' && !props.item.userGoodFeedback) {
+    params.userGoodFeedback = 'yes'
+  }
+  if (type === 'N' && !props.item.userBadFeedback) {
+    const feedback = await open()
+    if (!feedback) return;
+    params.userBadFeedback = feedback
+  }
+  const result = await updateUserFeedback(params)
+  if (!result) return;
+  emits('updateFeedback')
+}
 
-function report() {
-  emits('directReport')
+const open = (): Promise<string | false> => {
+  return new Promise(resolve => {
+    // 结果反馈
+    ElMessageBox.prompt('', '结果反馈', {
+      confirmButtonText: '提交反馈',
+      cancelButtonText: '关闭',
+      // inputPattern:,
+      inputErrorMessage: 'Invalid Email',
+    })
+      .then(({ value }) => {
+        resolve(value as string)
+      })
+      .catch(() => {
+        resolve(false)
+      })
+  })
 }
 
 </script>
@@ -95,13 +159,18 @@ function report() {
     margin-left: 10px;
     display: flex;
     align-items: center;
-    padding: 5px 10px;
+    //padding: 5px 10px;
     border-radius: 6px;
-    border: 1px solid #EBEBEB;
-    i {
+    border: 1px solid #E2E8F0;
+    overflow: hidden;
+    li {
       cursor: pointer;
-      &:hover {
-        color: #2D7CFF;
+      padding: 4px 5px;
+      display: flex;
+      align-items: center;
+      font-weight: bold;
+      & + li {
+        border-left: 1px solid #E2E8F0;
       }
     }
   }
@@ -188,6 +257,34 @@ function report() {
         }
       }
     }
+  }
+  .timer {
+    margin-left: 10px;
+    opacity: 0;
+    transition: all .3s;
+  }
+  &:hover {
+    .timer {
+      opacity: 1;
+    }
+  }
+}
+.success {
+  &:hover {
+    color: #12B76A;
+  }
+  &.active {
+    background-color: #12B76A;
+    color: #fff;
+  }
+}
+.danger {
+  &:hover {
+    color: rgb(252, 150, 99);
+  }
+  &.active {
+    background-color: rgb(252, 150, 99);
+    color: #fff;
   }
 }
 @keyframes Markdown_blink__bDVIw {

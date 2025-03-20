@@ -30,7 +30,11 @@
             </div>
           </div>
           <!--          回答-->
-          <ChatAnswer v-if="item.role === 'assistant'" :item="item"/>
+          <ChatAnswer v-if="item.role === 'assistant'"
+                      :activeChatId="activeChatId"
+                      :item="item"
+                      @updateFeedback="getMessage(activeChatId)"
+          />
         </template>
       </div>
       <div ref="bottomLineRef"></div>
@@ -99,7 +103,7 @@ import { baseURL, getPaginationRecords, uploadFile } from "@/api/api.ts";
 
 import sendImg from "@/assets/send.png";
 import Fujian from "@/assets/fujian.png";
-import stopSvg from "@/assets/svg/stop.svg";
+import stopSvg from "@/assets/icons/svg/stop.svg";
 import CloseTag from "@/assets/close-tag.png";
 
 import { getConfig } from "@/stores/config.ts";
@@ -188,10 +192,7 @@ async function sendMessageChat() {
   try {
     message.value.push({
       role: 'assistant',
-      content: '',
-      html: '',
-      reasoning: '',
-      progress: 'preThinking',
+      progress: 'init',
       value: []
     });
     loading.value = true;
@@ -360,6 +361,7 @@ async function getMessage(chatId: string) {
         dataId: item.dataId,
         time: item.time,
         userGoodFeedback: item.userGoodFeedback || '',
+        userBadFeedback: item.userBadFeedback || '',
         role: 'assistant',
         progress: 'done',
         value: item.value.filter((x: ChatType.ResponseAnswerItemType) => {

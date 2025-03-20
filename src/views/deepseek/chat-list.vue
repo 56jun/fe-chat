@@ -26,7 +26,7 @@
       >
         <el-icon size="18"><ChatDotRound/></el-icon>
         <div class="chat-list__chat-history-list__name show-lines-1">{{ item.title }}</div>
-        <div class="chat-list__chat-history-list__time">{{ formatterTime2shortText(item.updateTime) }}</div>
+        <div class="chat-list__chat-history-list__time">{{ formatTime2shortText(item.updateTime) }}</div>
         <el-popover
           title=""
           :width="100"
@@ -46,16 +46,16 @@
 
 <script setup lang="ts">
 import { onMounted, provide, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { ChatDotRound, Delete, MoreFilled } from "@element-plus/icons-vue";
 import { useChat } from "@/stores/userChat.ts";
 import { clearHistories, delHistory, getHistories, getPaginationRecords } from "@/api/api.ts";
-import { ElMessage } from "element-plus";
 import { getConfig } from "@/stores/config.ts";
 import { guid } from "@/utils/config.ts";
-import moment from "moment/moment";
+import { formatTime2shortText } from "@/utils";
 import type { ChatType } from "@/type/chat.ts";
 
-const { setLoading, activeChatId, history, setActiveChatId, clearChatHistory, message } = useChat()
+const { setLoading, activeChatId, history, setActiveChatId, clearChatHistory } = useChat()
 
 const appConfig = getConfig()
 
@@ -115,25 +115,6 @@ async function removeChatItem(item: ChatType.HistoryChatMessageType) {
   if(history.value.length === 0) {
     newChat(true)
   }
-}
-
-/**
- * 使用moment计算时间距离现在的时间
- * 1、如果在当天，就显示时+分
- * 2、如果在当天，就显示时+分
- * 3、如果在昨天，就显示昨天+时+分
- * 4、如果在今年，就显示月+日
- * */
-function formatterTime2shortText(time: number) {
-  const now = new Date().getTime()
-  const diff = now - (new Date(time)).getTime()
-  if (diff < 1000 * 60 * 60 * 24) {
-    return moment(time).format('HH:mm')
-  }
-  if (diff < 1000 * 60 * 60 * 24 * 2) {
-    return '昨天'
-  }
-  return moment(time).format('MM-DD')
 }
 
 async function getChatList() {
