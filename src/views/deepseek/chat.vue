@@ -7,7 +7,7 @@
         <span>&nbsp;{{ message.length }}条记录</span>
       </div>
     </div>
-    <div ref="answerBoxRef" class="answer-box">
+    <div ref="answerWindowRef" class="answer-box">
       <div class="answer-content">
         <template v-for="(item, index) in message">
           <div v-if="item.role === 'user'" style="display: flex; justify-content: flex-end">
@@ -29,33 +29,8 @@
               {{ item.content }}
             </div>
           </div>
-
-          <div v-if="item.role === 'assistant'" class="answer-content__assistant">
-            <div class="flex align-center">
-              <img src="../../assets/robot-icon.png" class="robot-bg" alt="icon"/>
-              <div v-if="['preThinking', 'outputing'].includes(item.progress)"
-                   style="display: flex; justify-content: flex-start; align-items: center;margin-left: 10px">
-                <el-icon class="is-loading" style="font-size: 22px">
-                  <Loading/>
-                </el-icon>
-                <span>&nbsp;{{ item.responseText || '思考中' }}...</span>
-              </div>
-              <div v-else class="answer-content__assistant__config-bar">
-                <el-icon @click="copyText((item.content as string) || item.html)"><CopyDocument /></el-icon>
-              </div>
-            </div>
-            <div v-if="item.progress !== 'preThinking'" class="answer-item" :id="'answerBox' + index">
-              <div v-if="item.reasoning_content" class="answer-item__reasoning">
-                <div class="answer-item__reasoning__title" @click="() => item.hide = !item.hide">
-                  <span>&nbsp;&nbsp;思考过程&nbsp;&nbsp;</span>
-                  <el-icon><ArrowDown v-show="item.hide" /><ArrowUp v-show="!item.hide" /></el-icon>
-                </div>
-                <div class="answer-item__reasoning__content" :class="{ 'hide': item.hide }" v-html="item.reasoning_content"></div>
-              </div>
-              <div v-if="item.html" v-html="item.html" class="markdown-body select-text"></div>
-              <div v-else>&nbsp;</div>
-            </div>
-          </div>
+          <!--          回答-->
+          <ChatAnswer v-if="item.role === 'assistant'" :item="item"/>
         </template>
       </div>
       <div ref="bottomLineRef"></div>
@@ -113,15 +88,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, nextTick, watch, inject, computed } from "vue";
-import { ElInput, ElMessage } from "element-plus";
-import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
+import { ref, reactive, onMounted, onUnmounted, nextTick, watch, type Ref, computed } from "vue";
+import { ElInput, ElMessage, type UploadFile } from "element-plus";
 import FileIcon from "./file-icon.vue";
-import axios from "axios";
 import { marked } from 'marked'
+import ChatAnswer from "./components/chat-answer.vue";
 
 import { copyDomText, throttle } from "@/utils/config";
-import { getPaginationRecords, uploadFile } from "@/api/api.ts";
+import { baseURL, getPaginationRecords, uploadFile } from "@/api/api.ts";
 
 import sendImg from "@/assets/send.png";
 import Fujian from "@/assets/fujian.png";
@@ -129,41 +103,16 @@ import stopSvg from "@/assets/svg/stop.svg";
 import CloseTag from "@/assets/close-tag.png";
 
 import { getConfig } from "@/stores/config.ts";
-import { useChat } from "@/stores/userChat.ts";
+import { useAutoScroll, useChat } from "@/stores/userChat.ts";
 import { streamFetch } from "@/utils/chat-fetch.ts";
-import { SseResponseEventEnum } from "@/views/deepseek/type.ts";
-import type { ChatMessageType, ResponseQueueItemType } from "@/views/deepseek/type.ts";
+import { type ChatType, SseResponseEventEnum } from "@/type/chat.ts";
 
 const { activeChatId, message } = useChat()
 const appConfig = getConfig()
 
-const getChatList = inject('getChatList')
 const needUpdateParentChatListTitle = ref(false)
 
-// const DEEPSEEK_API_KEY = 'fastgpt-tjw7kzL5oePDz8sSZTMZ0HAXEtCyT59dHDgXImhMMXBxy0AW9aAcDVqYj'; // 替换为你的 DeepSeek API 密钥
-const DEEPSEEK_API_URL = '/api'; // 替换为 DeepSeek 的 API 地址
-
-const toDealwith: {
-  index: number
-  task: string
-  reasonContent: string
-  reasonIndex: number
-  reset: () => void
-} = {
-  index: 0,
-  task: '',
-  reasonContent: '',
-  reasonIndex: 0,
-  reset() {
-    this.index = 0
-    this.task = ''
-    this.reasonContent = ''
-    this.reasonIndex = 0
-  }
-}
-
 const bottomLineRef = ref()
-const answerBoxRef = ref()
 const loading = ref(false)
 const uploadLoading = ref(false)
 const answerStartRender = ref(false)
@@ -178,24 +127,18 @@ const compositionInputStatus = ref(false)
 const form = reactive({
   question: '',
 })
-// const message = window.message = ref<ChatMessageType[]>([])
-const messages = ref<ChatMessageType[]>([])
-const fileList = ref<(File | {name: string, url: string})[]>([])
-// const responseText = ref('')
-const isAutoScroll = ref(true)
+const messages = ref<ChatType.ChatMessageType[]>([])
+const fileList = ref<UploadFile[]>([])
 const abortController = ref<null | AbortController>(null)
 
-function onScroll() {
-  // @ts-ignore
-  const { scrollHeight, scrollTop, offsetHeight } = document.querySelector('.answer-box') as Element
-  isAutoScroll.value = scrollTop + offsetHeight + 10 >= scrollHeight;
-}
+const answerWindowRef = ref<HTMLDivElement>()
+let isAutoScroll: Ref;
 
 function keyDownEnter(event: Event | KeyboardEvent) {
   if ("shiftKey" in event && event.shiftKey) return;
   if (compositionInputStatus.value) return;
   event.preventDefault();
-  if (progressGlobal.value === 'outputing') {
+  if (progressGlobal.value === 'outputting') {
     ElMessage.warning('请先停止上一轮对话')
     return
   }
@@ -203,17 +146,16 @@ function keyDownEnter(event: Event | KeyboardEvent) {
 }
 
 async function sendMessageChat() {
-  if (loading.value || !form.question || ['preThinking', 'outputing'].includes(progressGlobal.value)) {
+  if (loading.value || !form.question || ['preThinking', 'outputting'].includes(progressGlobal.value)) {
     return false;
   }
-  const url = DEEPSEEK_API_URL + '/v1/chat/completions';
+  const url = baseURL + '/api/v1/chat/completions';
 
   const { apiKey, ...configParams } = getConfig() || {}
 
-  let messageItem: ChatMessageType = { role: 'user', content: form.question, progress: '' }
+  let messageItem: ChatType.ChatMessageType = { role: 'user', content: form.question, progress: 'init' }
   if (fileList.value.length > 0) {
     const fileMessageList = fileList.value.map(x => {
-      // @ts-ignore
       return { type: 'file_url', name: x.name, url: x.url }
     })
     messageItem = {
@@ -222,14 +164,13 @@ async function sendMessageChat() {
         ...fileMessageList,
         { type: 'text', text: form.question },
       ]
-    } as ChatMessageType
+    } as ChatType.ChatMessageType
     fileList.value = []
   }
   message.value.push(messageItem);
   messages.value = [{ ...messageItem }]
   dataCache.value = [];
   let dataResponseTimes = 0;
-  toDealwith.reset()
   const params = {
     chatId: activeChatId.value,
     customUid: customUid.value,// 自定义的用户 ID。在历史记录中，该条记录的使用者会显示为 xxxxxx
@@ -250,9 +191,8 @@ async function sendMessageChat() {
       content: '',
       html: '',
       reasoning: '',
-      reasoning_content: '',
       progress: 'preThinking',
-      hide: false
+      value: []
     });
     loading.value = true;
     answerStartRender.value = false;
@@ -260,8 +200,6 @@ async function sendMessageChat() {
     form.question = '';
     isAutoScroll.value = true;
     scrollToBottom()
-
-    let currentStepName = 'answer'
 
     // 创建 AbortController 实例
     abortController.value = new AbortController();
@@ -274,32 +212,73 @@ async function sendMessageChat() {
       apiKey
     }).catch((err) => {
       console.error(err)
+      loading.value = false;
+      abortController.value = null;
+      const lastItem: ChatType.ChatMessageType = message.value[message.value.length - 1]
+      lastItem.responseText = ''
+      lastItem.progress = 'done'
+      if (!lastItem.value[0]?.html) {
+        lastItem.html = `<span>${err}</span>`
+      }
+      nextTick(scrollToBottom)
+      console.log('---Error---')
     })
   } catch (e) {
 
   }
 }
 
-function onMessage(msg: ResponseQueueItemType) {
-  const lastItem: ChatMessageType = message.value[message.value.length - 1]
+let lastValidResponseType = ''
+function onMessage(msg: ChatType.ResponseQueueItemType) {
+  const lastItem: ChatType.ChatMessageType = message.value[message.value.length - 1]
 
   if (['fastAnswer', 'answer'].includes(msg.event)) {
     if (msg.reasoningText) {
+      if (lastValidResponseType !== 'reasoning') {
+        lastItem.value.push({
+          type: 'reasoning',
+          reasoning: {
+            content: '',
+            html: ''
+          },
+        })
+      }
+      lastValidResponseType = 'reasoning'
+
       lastItem.responseText = 'AI 对话'
-      lastItem.progress = 'outputing'
-      lastItem.reasoning += (msg.reasoningText || '')
-      lastItem.reasoning_content = marked.parse(lastItem.reasoning)
+      lastItem.progress = 'outputting'
+
+      const lastReasoning = lastItem.value[lastItem.value.length - 1]
+      lastReasoning.reasoning.content += (msg.reasoningText || '')
+      lastReasoning.reasoning.html = marked.parse(lastReasoning.reasoning.content)
+
     } else if(msg.text) {
+      if (lastValidResponseType !== 'text') {
+        lastItem.value.push({
+          type: 'text',
+          text: {
+            content: '',
+            html: ''
+          }
+        })
+      }
+      lastValidResponseType = 'text'
+
       lastItem.responseText = 'AI 对话'
-      lastItem.progress = 'outputing'
-      lastItem.content += (msg.text || '')
-      lastItem.html = marked.parse((lastItem.content as string) || '') as string
+      lastItem.progress = 'outputting'
+
+      const lastText = lastItem.value[lastItem.value.length - 1]
+      lastText.text.content += (msg.text || '')
+      lastText.text.html = marked.parse(lastText.text.content || '')
     }
     if (isAutoScroll.value) {
       scrollToBottom()
     }
   } else if (msg.event === SseResponseEventEnum.flowNodeStatus) {
-    lastItem.progress = 'preThinking'
+    if (!lastValidResponseType) {
+      lastItem.progress = 'preThinking'
+    }
+    lastValidResponseType = 'flowNodeStatus'
     let name = msg.name
     if (name === "workflow:template.ai_chat") {
       name = 'AI 对话'
@@ -311,65 +290,9 @@ function onMessage(msg: ResponseQueueItemType) {
     abortController.value = null;
     lastItem.responseText = ''
     lastItem.progress = 'done'
+    getMessage(activeChatId.value)
+    nextTick(scrollToBottom)
     console.log('finally');
-  }
-}
-
-function getNextIndex() {
-  let step = 1
-  const extraText = toDealwith.task.slice(toDealwith.index)
-  if (
-    extraText.startsWith('<') &&
-    (/^[A-Za-z]+$/.test(extraText.slice(1, 2)) || extraText.slice(1, 2) === '/')
-  ) {
-    while (!extraText.slice(0, step).endsWith('>') && step < 40) {
-      step++
-    }
-  } else if (extraText.startsWith('\n')) {
-    step = 2
-  }
-  return step
-}
-
-let reasonTimer:number = 0;
-function renderReasonResponse() {
-  const observeItem = message.value[message.value.length - 1]
-  if (!reasonTimer) {
-    reasonTimer = setInterval(() => {
-      if (toDealwith.reasonIndex < toDealwith.reasonContent.length) {
-        const step = getNextIndex()
-        observeItem.reasoning_content = toDealwith.reasonContent.slice(0, toDealwith.reasonIndex + step)
-        toDealwith.reasonIndex += step
-        if (isAutoScroll.value) {
-          scrollToBottom()
-        }
-      } else {
-        clearInterval(reasonTimer)
-        reasonTimer = 0
-        renderResponse()
-      }
-    }, 25)
-  }
-}
-
-let answerTimer:number = 0;
-function renderResponse() {
-  const observeItem = message.value[message.value.length - 1]
-  if (!answerTimer) {
-    answerTimer = setInterval(() => {
-      answerStartRender.value = true
-      if (toDealwith.index < toDealwith.task.length) {
-        const step = getNextIndex()
-        observeItem.html = toDealwith.task.slice(0, toDealwith.index + step)
-        toDealwith.index += step
-        if (isAutoScroll.value) {
-          scrollToBottom()
-        }
-      } else {
-        clearInterval(answerTimer)
-        answerTimer = 0
-      }
-    }, 35)
   }
 }
 
@@ -399,15 +322,13 @@ async function onChange(file: File) {
   const formData = new FormData();
   uploadLoading.value = true
   formData.append('file', file)
-  const result: any = await uploadFile(formData)
+  const result = await uploadFile(formData)
   uploadLoading.value = false
-  if (!result) {
-    return;
-  }
+  if (!result) return false;
   fileList.value.push({
     name: result.data.yswjmc,
     url: result.data.wjfwurl
-  })
+  } as UploadFile)
 }
 
 const scrollToBottom = throttle(() => {
@@ -425,37 +346,33 @@ function copyText(text: string | undefined) {
   }
 }
 
-watch(() => activeChatId?.value, async (val) => {
-  if (!val) {
-    message.value = []
-    return;
-  }
+async function getMessage(chatId: string) {
   const result: any = await getPaginationRecords({
     offset: 0,
     pageSize: 20,
     appId: appConfig.appId,
-    chatId: val,
+    chatId,
   })
-  message.value = (result?.data?.list || []).map((item: any) => {
+  message.value = (result?.data?.list || []).map((item: ChatType.ChatMessageType) => {
     if (item.obj === 'AI') {
-      const contentIndex = item.value.findIndex((x: any) => x.type === 'text')
       const reasoningContentIndex = item.value.findIndex((x: any) => x.type === 'reasoning')
-      let content = item.value[contentIndex].text.content
-      // if (content.startsWith('```markdown')) {
-      //   content = content.replace(/```markdown/g, '');
-      //   toDealwith.index = 0
-      // }
-      const resultItem: ChatMessageType = {
+      const resultItem: ChatType.ChatMessageType = {
+        dataId: item.dataId,
+        time: item.time,
+        userGoodFeedback: item.userGoodFeedback || '',
         role: 'assistant',
-        content: content,
-        html: marked.parse(content) as string,
-        hide: false,
         progress: 'done',
-      }
-      if (reasoningContentIndex > -1) {
-        const reasonContent = item.value[reasoningContentIndex].reasoning.content
-        resultItem.reasoning = reasonContent
-        resultItem.reasoning_content = marked.parse(reasonContent)
+        value: item.value.filter((x: ChatType.ResponseAnswerItemType) => {
+          return x.type === 'text' && x.text.content || x.type === 'reasoning' && x.reasoning.content
+        }).map((x: ChatType.ResponseAnswerItemType) => {
+          if (x.type === 'text') {
+            x.text.html = marked.parse(x.text.content) as string;
+          } else if(x.type === 'reasoning') {
+            x.hide = false
+            x.reasoning.html = marked.parse(x.reasoning.content) as string;
+          }
+          return x
+        }),
       }
       return resultItem
     } else {
@@ -479,18 +396,28 @@ watch(() => activeChatId?.value, async (val) => {
     }
   })
   needUpdateParentChatListTitle.value = message.value.length === 0
-  scrollToBottom()
+  nextTick(scrollToBottom)
+}
+
+watch(() => activeChatId?.value, (chatId) => {
+  stopResponse()
+  if (!chatId) {
+    message.value = []
+    return;
+  }
+  getMessage(chatId)
 }, { immediate: true })
 
-
 onMounted(() => {
-  // message.value.push({ role: 'assistant', html: '您好，我是高新区任务督办小助手，可以精准查询项目进展情况，也可以做一些统计分析，欢迎向我提问！' } as ChatMessageType);
-  (document.querySelector('.answer-box') as Element).addEventListener('scroll', onScroll);
+  if (answerWindowRef.value) {
+    const ob = useAutoScroll(answerWindowRef.value)
+    isAutoScroll = ob.isAutoScroll
+  }
   nextTick(scrollToBottom)
 })
 
 onUnmounted(() => {
-  (document.querySelector('.answer-box') as Element).removeEventListener('scroll', onScroll);
+  // (document.querySelector('.answer-box') as Element).removeEventListener('scroll', onScroll);
 })
 </script>
 
@@ -499,10 +426,11 @@ onUnmounted(() => {
 
 
 .deepseek {
-  //width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
+  --chat-answer-width: 90%;
+  --chat-input-width: 80%;
 
   .chat-header {
     height: 60px;
@@ -522,30 +450,6 @@ onUnmounted(() => {
     position: unset;
     height: 0;
     flex: 1 0 0;
-
-    .answer-content {
-      &__assistant {
-        max-width: calc(100% - 180px);
-        padding: 12px;
-        margin-left: 7px;
-        margin-bottom: 10px;
-        &__config-bar {
-          margin-left: 10px;
-          display: flex;
-          align-items: center;
-          padding: 5px 10px;
-          border-radius: 6px;
-          border: 1px solid #EBEBEB;
-          i {
-            cursor: pointer;
-            &:hover {
-              color: #2D7CFF;
-            }
-          }
-        }
-      }
-    }
-
 
     .question-item {
       max-width: calc(100% - 50px);
@@ -648,7 +552,8 @@ onUnmounted(() => {
   .input-area {
     position: relative;
     margin: 5px auto 10px auto;
-    width: 760px;
+    width: var(--chat-input-width);
+    max-width: 760px;
     //margin: 7px auto 0 auto;
     &__file-list {
       display: flex;

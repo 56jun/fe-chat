@@ -1,13 +1,13 @@
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { clearHistories } from "@/api/api.ts";
 import { ElMessage } from "element-plus";
-import type { HistoryChatMessageType, ChatMessageType } from '@/views/deepseek/type.ts'
+import { type ChatType } from "@/type/chat.ts"
 
 
 const activeChatId = ref<string>('')
-const chatList = ref<HistoryChatMessageType[]>([])
+const chatList = ref<ChatType.HistoryChatMessageType[]>([])
 const loading = ref<boolean>(false)
-const message = ref<ChatMessageType[]>([])
+const message = ref<ChatType.ChatMessageType[]>([])
 
 export const useChat = () => {
 
@@ -17,7 +17,16 @@ export const useChat = () => {
     }
     activeChatId.value = id
     if (message.value.length === 0) {
-      message.value.push(({role: 'assistant', html: '您好，我是高新区任务督办小助手，可以精准查询项目进展情况，也可以做一些统计分析，欢迎向我提问！' }) as ChatMessageType)
+      message.value.push(({
+        role: 'assistant',
+        value: [{
+          type: "text",
+          text: {
+            content: '您好，我是高新区任务督办小助手，可以精准查询项目进展情况，也可以做一些统计分析，欢迎向我提问！',
+            html: '您好，我是高新区任务督办小助手，可以精准查询项目进展情况，也可以做一些统计分析，欢迎向我提问！'
+          }
+        }]
+      }) as ChatType.ChatMessageType)
     }
   }
 
@@ -44,4 +53,19 @@ export const useChat = () => {
     clearChatHistory,
     message
   }
+}
+
+export const useAutoScroll = (el: HTMLElement) => {
+  const isAutoScroll = ref(true)
+  function onScroll() {
+    // @ts-ignore
+    const { scrollHeight, scrollTop, offsetHeight } = el
+    isAutoScroll.value = scrollTop + offsetHeight + 2 >= scrollHeight;
+  }
+
+  el.addEventListener('scroll', onScroll)
+  onUnmounted(() => {
+    el.removeEventListener('scroll', onScroll)
+  })
+  return { isAutoScroll }
 }

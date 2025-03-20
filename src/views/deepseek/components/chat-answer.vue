@@ -1,0 +1,202 @@
+<template>
+  <div class="answer-content__assistant">
+    <div class="flex align-center">
+      <img src="../../../assets/robot-icon.png" class="robot-bg" alt="icon"/>
+      <div v-if="['preThinking', 'outputting'].includes(item.progress)"
+           style="display: flex; justify-content: flex-start; align-items: center;margin-left: 10px;color: #4A7AEB;font-weight: bold;">
+        <el-icon class="is-loading" style="font-size: 22px">
+          <Loading/>
+        </el-icon>
+        <span>&nbsp;{{ item.responseText || '思考中' }}...</span>
+      </div>
+      <div v-else class="answer-content__assistant__config-bar">
+        <el-icon @click="copyText">
+          <CopyDocument/>
+        </el-icon>
+      </div>
+    </div>
+    <div v-if="item.progress !== 'preThinking'" class="answer-item">
+      <div v-for="(responseItem, responseIndex) in item.value" :key="`${responseIndex}`">
+        <div v-if="responseItem.type === 'reasoning'"
+             class="answer-item__reasoning"
+        >
+          <div class="answer-item__reasoning__title" @click="() => { responseItem.hide = !responseItem.hide }">
+            <span>&nbsp;&nbsp;思考过程&nbsp;&nbsp;</span>
+            <el-icon>
+              <ArrowDown v-show="responseItem.hide"/>
+              <ArrowUp v-show="!responseItem.hide"/>
+            </el-icon>
+          </div>
+          <div class="answer-item__reasoning__content"
+               :class="{
+                  'hide': responseItem.hide,
+                  answering: responseIndex === (item.value.length - 1) && item.progress !== 'done'
+               }"
+               v-html="responseItem.reasoning?.html"
+          ></div>
+        </div>
+        <div v-else-if="responseItem.type === 'text'"
+             v-html="responseItem.text?.html"
+             class="markdown-body select-text"
+             :class="{ answering: responseIndex === (item.value.length - 1) && item.progress !== 'done' }"
+        ></div>
+        <div v-else>&nbsp;</div>
+        <div v-if="responseIndex < item.value.length - 1" class="answer-item__comment--split" style="border-bottom: 1px dashed #B7B7BB;"></div>
+        <div class="answer-item__comment">
+                <span v-if="item.userGoodFeedback === 'Y'" class="flex align-center">
+                  <el-icon size="18" style="margin-right: 5px;"><CircleCheck/></el-icon>问题已解决
+                </span>
+          <span v-else-if="item.userGoodFeedback === 'N'" class="flex align-center">
+                  <el-icon size="18" color="#ff8536" style="margin-right: 5px;"><Warning/></el-icon>问题未解决
+                </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { defineProps, defineEmits } from 'vue'
+import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
+import { copyDomText } from "@/utils/config.ts";
+import { ElMessage } from "element-plus";
+import { type ChatType } from "@/type/chat.ts";
+
+const props = defineProps<{
+  item: ChatType.ChatMessageType,
+}>()
+
+const emits = defineEmits(['directReport'])
+
+function copyText() {
+  const text = props.item.value?.map((x: ChatType.ResponseAnswerItemType) => {
+    if (x.type !== 'text') return '';
+    return x.text.content;
+  })
+  if (copyDomText(text.join(" "))) {
+    ElMessage.success("已复制到剪贴板");
+  }
+}
+
+
+function report() {
+  emits('directReport')
+}
+
+</script>
+
+<style scoped lang="less">
+.answer-content__assistant {
+  width: var(--chat-answer-width);
+  padding: 12px;
+  margin-left: 7px;
+  margin-bottom: 10px;
+  &__config-bar {
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid #EBEBEB;
+    i {
+      cursor: pointer;
+      &:hover {
+        color: #2D7CFF;
+      }
+    }
+  }
+  .robot-bg {
+    width: 33px;
+    height: 33px;
+    min-width: 33px;
+  }
+  .answer-item {
+    width: 100%;
+    min-height: 20px;
+    padding: 12px;
+    margin-top: 10px;
+    word-break: break-all;
+    position: relative;
+    display: inline-block;
+    background-color: #F7F8FA;
+    color: #000;
+    font-size: 14px;
+    border-radius: 0 8px 8px;
+    .markdown-body {
+      * {
+        word-break: break-word;
+      }
+    }
+    .answering > :nth-last-child(1) {
+        &::after {
+          display: inline-block;
+          content: "";
+          width: 3px;
+          height: 14px;
+          transform: translate(4px, 2px) scaleY(1.3);
+          background-color: #2b5fd9;
+          animation: Markdown_blink__bDVIw .6s infinite;
+      }
+    }
+    :deep(code) {
+      white-space: normal;
+      word-break: break-all;
+    }
+    &__comment {
+      color: #78787C;
+      margin-top: 10px;
+      text-align: right;
+      &--split {
+        margin-top: 10px;
+      }
+      span {
+        & + span {
+          margin-left: 13px;
+        }
+      }
+    }
+    &__reasoning {
+      max-width: 100%;
+      &__title {
+        display: inline-block;
+        padding: 5px 12px;
+        border: 1px solid #EBEBEB;
+        border-radius: 8px;
+        background-color: white;
+        cursor: pointer;
+        user-select: none;
+      }
+      &__content {
+        margin: 10px 0;
+        max-width: 100%;
+        padding: 10px;
+        border-left: 2px solid #b3b3b3;
+        height: auto;
+        overflow: hidden;
+        //font-style: italic;
+        color: rgba(0, 0, 0, .6);
+        //background-color: rgba(0, 0, 0, .09);
+        //background-color: #FBFBFC;
+        &.hide {
+          height: 0;
+          padding: 0;
+        }
+        :deep(p) {
+          & + p {
+            margin-top: 5px;
+          }
+        }
+      }
+    }
+  }
+}
+@keyframes Markdown_blink__bDVIw {
+  0%,to {
+    opacity: 0
+  }
+
+  50% {
+    opacity: 1
+  }
+}
+</style>

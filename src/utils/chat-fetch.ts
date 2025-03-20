@@ -1,11 +1,7 @@
 import moment from 'moment';
-import {
-  // refer to https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web
-  EventStreamContentType,
-  fetchEventSource
-} from '@fortaine/fetch-event-source';
-import { SseResponseEventEnum } from "@/views/deepseek/type.ts";
-import type { ResponseQueueItemType } from "@/views/deepseek/type.ts";
+// refer to https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web
+import { EventStreamContentType, fetchEventSource } from '@fortaine/fetch-event-source';
+import { type ChatType, SseResponseEventEnum } from "@/type/chat";
 
 const formatTime2YMDHMW = (): string => {
   return moment().format('YYYY-MM-DD HH:mm:ss');
@@ -78,7 +74,7 @@ export const streamFetch = async ({ url = '/api/v1/chat/completions', data, apiK
     abortCtrl.abort('Time out');
   }, 60000);
   let responseText = '';
-  let responseQueue: ResponseQueueItemType[] = [];
+  let responseQueue: ChatType.ResponseQueueItemType[] = [];
   let errMsg: string | undefined;
   let responseData: any[] = [];
   let finished = false;
@@ -139,7 +135,7 @@ export const streamFetch = async ({ url = '/api/v1/chat/completions', data, apiK
 
   animateResponseText();
 
-  const pushDataToQueue = (data: ResponseQueueItemType) => {
+  const pushDataToQueue = (data: ChatType.ResponseQueueItemType) => {
     responseQueue.push(data);
     if (document.hidden) {
       animateResponseText();
