@@ -12,6 +12,8 @@ html,body {
   height: 100%;
   //font-weight: normal;
   font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 .reset-style {
   margin: 0;
@@ -55,10 +57,7 @@ html,body {
   color: #ff4d4f !important;
 }
 
-/**
- * 多行省略
- * @line 行数 默认值 2
- */
+
 /**
  * 多行省略
  * @line 行数 默认值 2
@@ -77,3 +76,18 @@ html,body {
 .show-lines-2 {
   .show-lines(2);
 }
+
+::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  cursor: pointer;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b8b8b8;
+  border-radius: 20px;
+}
+

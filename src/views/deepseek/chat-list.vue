@@ -19,7 +19,7 @@
         </template>
       </el-popconfirm>
     </div>
-    <ul class="reset-style chat-list__chat-history-list">
+    <ul v-infinite-scroll="loadMore" :infinite-scroll-distance="150" class="reset-style chat-list__chat-history-list">
       <li v-for="item in history" :key="item.chatId" @click="changeChat(item)"
           class="flex align-center"
           :class="{ active: item.chatId === activeChatId }"
@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, provide, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ChatDotRound, Delete, MoreFilled } from "@element-plus/icons-vue";
 import { useChat } from "@/stores/userChat.ts";
@@ -117,27 +117,37 @@ async function removeChatItem(item: ChatType.HistoryChatMessageType) {
   }
 }
 
+const pageInfo = {
+  page: 1,
+  offset: 0,
+  pageSize: 20,
+}
+
 async function getChatList() {
   const appConfig = getConfig()
   setLoading(true)
   const result: any = await getHistories({
     appId: appConfig.appId,
-    "offset": 0,
+    "offset": (pageInfo.page - 1) * pageInfo.pageSize,
     "pageSize": 20,
     "source": "api"
   })
   setLoading(false)
   if (!result) return;
   const list = result.data?.list || []
-  history.value = list
+  history.value = history.value.concat(list)
   if (!list || list.length === 0) {
     newChat(true)
-  } else {
+  } else if (!activeChatId.value) {
     setActiveChatId(list[0].chatId)
   }
 }
 
-provide('getChatList', getChatList)
+async function loadMore() {
+  pageInfo.page ++
+  getChatList()
+}
+
 
 onMounted(getChatList)
 </script>

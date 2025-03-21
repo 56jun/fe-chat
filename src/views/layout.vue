@@ -47,9 +47,9 @@ const { activeChatId } = useChat()
       background-color: white;
       border-radius: 16px;
       border: 1px solid #DFE2EA;
-      overflow: hidden;
+      //overflow: hidden;
       .chat-detail {
-        width: calc(100% - 316px);
+        width: calc(100% - 296px);
         //flex: 1;
       }
     }

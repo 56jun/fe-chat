@@ -470,7 +470,6 @@ onUnmounted(() => {
 
       &__text {
         display: block;
-        margin-top: 5px;
       }
 
       &__file {
@@ -480,7 +479,7 @@ onUnmounted(() => {
         background-color: white;
         border-radius: 5px;
         color: #3b2300;
-        margin: 2px;
+        margin: 2px 2px 5px;
         font-size: 12px;
 
         &--icon {

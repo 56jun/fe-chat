@@ -10,7 +10,7 @@
         <span>&nbsp;{{ item.responseText || '思考中' }}...</span>
       </div>
       <ul v-else class="reset-style answer-content__assistant__config-bar">
-        <li><el-icon @click="copyText"><CopyDocument/></el-icon></li>
+        <li><el-icon @click="copyText" title="复制"><CopyDocument/></el-icon></li>
         <li @click="likeOrDislike('Y')"
             v-if="!item.userBadFeedback"
             class="success"
@@ -65,6 +65,7 @@
         </div>
       </div>
     </div>
+    <el-icon @click="copyText" class="bottom-copy-btn" title="复制"><CopyDocument/></el-icon>
   </div>
 </template>
 
@@ -151,7 +152,9 @@ const open = (): Promise<string | false> => {
 
 <style scoped lang="less">
 .answer-content__assistant {
+  position: relative;
   width: var(--chat-answer-width);
+  max-width: calc(100% - 24px);
   padding: 12px;
   margin-left: 7px;
   margin-bottom: 10px;
@@ -263,9 +266,23 @@ const open = (): Promise<string | false> => {
     opacity: 0;
     transition: all .3s;
   }
+  .bottom-copy-btn {
+    position: absolute;
+    right: -10px;
+    bottom: 15px;
+    font-size: 18px;
+    cursor: pointer;
+    display: none;
+    &:hover {
+      color: #12B76A;
+    }
+  }
   &:hover {
     .timer {
       opacity: 1;
+    }
+    .bottom-copy-btn {
+      display: initial;
     }
   }
 }
