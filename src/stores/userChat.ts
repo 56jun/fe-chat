@@ -1,8 +1,9 @@
 import { ref, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { clearHistories } from "@/api/api.ts";
+import { clearHistories, getPaginationRecords } from "@/api/api.ts";
 import { type ChatType } from "@/type/chat.ts"
 import moment from "moment";
+import { guid } from "@/utils";
 
 
 const activeChatId = ref<string>('')
@@ -53,6 +54,34 @@ export const useChat = () => {
     chat.title = text
   }
 
+  async function newChat(appConfig: { appId: string; appName: string; apiKey: string; }, force: boolean = false) {
+    if (!force) {
+      setLoading(true)
+      const result: any = await getPaginationRecords({
+        offset: 0,
+        pageSize: 20,
+        appId: appConfig.appId,
+        chatId: activeChatId.value,
+      })
+      setLoading(false)
+      if (result.data.total === 0) {
+        return;
+      }
+    }
+    const chatId = guid()
+    const newChatItem: ChatType.HistoryChatMessageType = {
+      appId: appConfig.appId,
+      chatId,
+      customTitle: '',
+      title: '新对话',
+      updateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+      type: 'welcome',
+      top: false,
+    }
+    chatList.value.unshift(newChatItem)
+    setActiveChatId(chatId)
+  }
+
   return {
     loading,
     activeChatId,
@@ -62,7 +91,8 @@ export const useChat = () => {
     clearChatHistory,
     message,
     resetChatCache,
-    updateNewQuestion
+    updateNewQuestion,
+    newChat,
   }
 }
 

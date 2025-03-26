@@ -1,14 +1,24 @@
 <template>
   <div v-loading="requestLoading" class="deepseek">
     <div class="chat-header flex align-center">
-      <span>{{ activeHistoryItem.title || '新对话' }}</span>
-      <div class="flex align-center chat-header__record"
-           style="margin-left: 10px;line-height: 0;flex-shrink: 0;" type="primary">
-        <el-icon>
-          <Clock/>
-        </el-icon>
-        <span>&nbsp;{{ message.length }}条记录</span>
+      <div class="flex align-center chat-header__left">
+        <el-icon v-if="showBack" size="22" @click="onBack" style="margin-right: 10px;"><ArrowLeftBold /></el-icon>
+        <span class="chat-header__chat-title">{{ (activeHistoryItem.title || '新对话').slice(0, 20) }}</span>
+        <img @click="viewDrawer"
+             class="chat-header__chat-history"
+             src="@/assets/app-config.webp"
+             height="20px"
+        >
+        <div class="flex align-center chat-header__record"
+             style="margin-left: 10px;line-height: 0;flex-shrink: 0;" type="primary">
+          <el-icon>
+            <Clock/>
+          </el-icon>
+          <span>&nbsp;{{ message.length }}条记录</span>
+        </div>
       </div>
+      <div class="chat-header__app-name">{{ appConfig.appName || '' }}</div>
+      <el-icon class="chat-header__new-chat" @click="newChat(appConfig)" size="22"><CirclePlus /></el-icon>
     </div>
     <div ref="answerWindowRef" class="answer-box">
       <div class="answer-content">
@@ -65,7 +75,7 @@
                   @compositionend="() => compositionInputStatus = false"
                   @keydown.enter.stop="keyDownEnter"
         ></el-input>
-        <div class="AI-button">
+        <div class="upload-button">
           <el-upload
             action="#"
             class="upload-demo"
@@ -92,6 +102,13 @@
         </div>
       </div>
     </div>
+    <el-drawer
+      v-model="drawer"
+      direction="ltr"
+      size="70%"
+    >
+      <ChatList :app-config="appConfig" custom-uid="123" @select="() => drawer = false"/>
+    </el-drawer>
   </div>
 </template>
 
@@ -105,9 +122,12 @@ import {
   watch,
   unref,
   computed,
-  defineProps
+  defineProps,
+  toRef,
+  defineEmits,
 } from "vue";
 import { ElInput, ElMessage, type UploadFile } from "element-plus";
+import ChatList from "@/package/views/chat-list.vue";
 import FileIcon from "./file-icon.vue";
 import { marked } from 'marked'
 import ChatAnswer from "./components/chat-answer.vue";
@@ -123,17 +143,27 @@ import CloseTag from "@/assets/close-tag.png";
 import { useChat } from "@/stores/userChat.ts";
 import { streamFetch } from "@/utils/chat-fetch.ts";
 import { type ChatType, SseResponseEventEnum } from "@/type/chat.ts";
-import useChatStore from '@/store/modules/chat.ts'
+// import useChatStore from '@/store/modules/chat.ts'
+
 
 const props = defineProps<{
-  customUid: string,
+  appConfig: {
+    appId: string
+    appName: string
+    apiKey: string
+  }
+  customUid: string
+  showBack: boolean
 }>()
-const customUid = computed(() => unref(props.customUid))
+const appConfig = computed(() => props.appConfig)
+const showBack = computed(() => props.showBack)
 
-const { activeChatId, message, history, updateNewQuestion } = useChat()
+const emits = defineEmits(["back"])
 
-const store = useChatStore()
-const appConfig = computed(() => store.getAppConfig)
+const { activeChatId, message, history, updateNewQuestion, newChat } = useChat()
+
+// const store = useChatStore()
+// const appConfig = computed(() => store.getAppConfig)
 
 const needUpdateParentChatListTitle = ref(false)
 
@@ -155,6 +185,16 @@ const abortController = ref<null | AbortController>(null)
 
 const answerWindowRef = ref<HTMLElement>()
 const isAutoScroll = ref(true);
+
+
+const drawer = ref<boolean>(false)
+function viewDrawer() {
+  drawer.value = true
+}
+
+function onBack() {
+  emits('back')
+}
 
 function keyDownEnter(event: Event | KeyboardEvent) {
   if ("shiftKey" in event && event.shiftKey) return;
@@ -194,7 +234,7 @@ async function sendMessageChat() {
   message.value.push(messageItem);
   const params = {
     chatId: activeChatId.value,
-    customUid: customUid.value,// 自定义的用户 ID。在历史记录中，该条记录的使用者会显示为 xxxxxx
+    customUid: props.customUid,// 自定义的用户 ID。在历史记录中，该条记录的使用者会显示为 xxxxxx
     // 替换为实际的请求参数
     // prompt: this.form.question,
     messages: [{ ...messageItem }],
@@ -471,14 +511,36 @@ onUnmounted(() => {
   --chat-input-width: 80%;
 
   .chat-header {
+    position: relative;
     height: 60px;
-    padding-left: 20px;
+    padding: 0 20px;
     background-color: #FBFBFC;
     &__record {
       padding: 5px 10px;
       border-radius: 4px;
       background-color: #F0F4FF;
       color: #3370FF;
+    }
+    &__chat-history {
+      display: none;
+      font-size: 22px;
+      cursor: pointer;
+    }
+    &__app-name {
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      top: 50%;
+      color: #0D0E15;
+      text-align: center;
+      font-weight: bold;
+      font-size: 16px;
+      display: none;
+    }
+    &__chat-title {
+    }
+    &__new-chat {
+      display: none;
     }
   }
 
@@ -629,9 +691,9 @@ onUnmounted(() => {
           top: -10px;
           cursor: pointer;
           transition: transform .2s;
-          &:hover {
-            transform: scale(1.1);
-          }
+          //&:hover {
+          //  transform: scale(1.1);
+          //}
         }
       }
     }
@@ -696,7 +758,7 @@ onUnmounted(() => {
 
       }
 
-      .AI-button {
+      .upload-button {
         position: absolute;
         bottom: 10px;
         left: 10px;
@@ -736,6 +798,56 @@ onUnmounted(() => {
 
       .disabled {
         opacity: 0.3;
+      }
+    }
+  }
+}
+</style>
+<style lang="less" scoped>
+@media (max-width: 960px) {
+  .deepseek {
+    .chat-header {
+      justify-content: space-between;
+      &__chat-history {
+        display: initial;
+      }
+      &__app-name {
+        display: initial;
+      }
+      &__chat-title {
+        display: none;
+      }
+      &__new-chat {
+        display: initial;
+      }
+    }
+    .input-area {
+      //width: var(--chat-input-width);
+      width: 100%;
+      margin: 0;
+      padding: 5px 20px 30px 20px;
+      max-width: unset;
+      background-color: #F7F8FA;
+      :deep(.textarea ) {
+        .el-textarea__inner {
+          background: white;
+          box-shadow: none;
+          border-color: transparent;
+          padding: 10px 45px;
+
+        }
+      }
+      .upload-button {
+        bottom: 3px;
+        img {
+          height: 25px;
+        }
+      }
+      .send-button {
+        bottom: 6px;
+        &--send {
+          height: 30px;
+        }
       }
     }
   }

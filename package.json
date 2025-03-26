@@ -1,7 +1,6 @@
 {
   "name": "fe-chaaat",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.0.3-beta.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,17 +12,21 @@
     "lint:eslint": "eslint . --fix",
     "lint": "run-s lint:*",
     "format": "prettier --write src/",
-    "package": "npm run build --target ./ ./src/index.ts"
+    "package": "npm run build --target ./ ./src/package/index.ts"
   },
   "files": [
     "dist"
   ],
-  "main": "./dist/chaat.umd.js",
-  "module": "./dist/chaat.es.js",
+  "main": "./dist/index.umd.js",
+  "module": "./dist/index.es.js",
   "exports": {
     ".": {
-      "import": "./dist/chaat.es.js",
-      "require": "./dist/chaat.umd.js"
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.js"
+    },
+    "./dist/": {
+      "import": "./dist/",
+      "require": "./dist/"
     }
   },
   "dependencies": {

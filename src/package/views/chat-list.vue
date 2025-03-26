@@ -1,13 +1,13 @@
 <template>
   <div class="chat-list" v-loading="loading">
-    <div class="flex align-center">
+    <div class="flex align-center chat-list__app">
       <el-icon style="font-size: 20px; color: #4772e1;">
         <Platform/>
       </el-icon>
       <div class="chat-list__app-name">{{ appConfig.appName }}</div>
     </div>
     <div class="chat-list__chat-config">
-      <el-button @click="newChat()" class="chat-list__chat-config__new-chat" :icon="ChatDotRound"
+      <el-button @click="newChat(appConfig)" class="chat-list__chat-config__new-chat" :icon="ChatDotRound"
                  round>新对话
       </el-button>
       <el-popconfirm @confirm="clearChatList"
@@ -55,21 +55,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, onMounted, reactive, ref, unref, watch } from 'vue'
+import { computed, defineProps, defineEmits, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useScroll } from '@vueuse/core'
 // 导入垃圾桶图标
 import { ChatDotRound, Delete } from "@element-plus/icons-vue";
 import { useChat, formatTime2shortText } from "@/stores/userChat";
 import { delHistory, getHistories, getPaginationRecords } from "@/api/api";
-import { guid } from "@/utils";
 import type { ChatType } from "@/type/chat.ts";
-import useChatStore from '@/store/modules/chat'
 
 const props = defineProps<{
-  customUid: string,
+  appConfig: {
+    appId: string
+    appName: string
+    apiKey: string
+  }
+  customUid: string
 }>()
-const customUid = computed(() => unref(props.customUid))
+const appConfig = computed(() => props.appConfig)
+
+const emits = defineEmits(["select"]);
 
 const {
   setLoading,
@@ -78,10 +83,8 @@ const {
   history,
   setActiveChatId,
   clearChatHistory,
+  newChat,
 } = useChat()
-
-const store = useChatStore()
-const appConfig = computed(() => store.getAppConfig)
 
 const appListRef = ref()
 const { arrivedState } = useScroll(appListRef)
@@ -97,36 +100,10 @@ async function clearChatList() {
   getChatList()
 }
 
-async function newChat(force: boolean = false) {
-  if (!force) {
-    setLoading(true)
-    const result: any = await getPaginationRecords({
-      offset: 0,
-      pageSize: 20,
-      appId: appConfig.value.appId,
-      chatId: activeChatId.value,
-    })
-    setLoading(false)
-    if (result.data.total === 0) {
-      return;
-    }
-  }
-  const chatId = guid()
-  const newChatItem: ChatType.HistoryChatMessageType = {
-    appId: appConfig.value.appId,
-    chatId,
-    customTitle: '',
-    title: '新对话',
-    updateTime: `${new Date().getTime()}`,
-    type: 'welcome',
-    top: false,
-  }
-  history.value.unshift(newChatItem)
-  setActiveChatId(chatId)
-}
 
 function changeChat(item: ChatType.HistoryChatMessageType) {
   setActiveChatId(item.chatId)
+  emits('select', item)
 }
 
 async function removeChatItem(item: ChatType.HistoryChatMessageType) {
@@ -146,7 +123,7 @@ async function removeChatItem(item: ChatType.HistoryChatMessageType) {
   if (index === -1) return;
   history.value.splice(index, 1)
   if (history.value.length === 0) {
-    return newChat(true)
+    return newChat(appConfig.value, true)
   }
   history.value = []
   setActiveChatId(history.value[0]?.chatId)
@@ -165,9 +142,10 @@ const infiniteScrollDisabled = computed(() => {
 })
 
 async function getChatList() {
+  if (!appConfig.value.appId) return false;
   setLoading(true)
   const result: any = await getHistories({
-    customUid: customUid.value,
+    customUid: props.customUid,
     appId: appConfig.value.appId,
     offset: (pageInfo.page - 1) * pageInfo.pageSize,
     pageSize: 20,
@@ -179,7 +157,7 @@ async function getChatList() {
   history.value = history.value.concat(list)
   pageInfo.total = result.data.total || 0
   if (!list || list.length === 0) {
-    newChat(true)
+    newChat(appConfig.value, true)
   } else if (!activeChatId.value) {
     setActiveChatId(list[0].chatId)
   }
@@ -191,9 +169,11 @@ async function loadMore() {
   pageInfo.page++
   getChatList()
 }
+watch(() => props.appConfig.appId, (value) => {
+  getChatList()
+}, { immediate: true })
 
-
-onMounted(getChatList)
+// onMounted(getChatList)
 </script>
 
 <style scoped lang="less">
@@ -256,16 +236,6 @@ onMounted(getChatList)
       & + li {
         margin-top: 8px;
       }
-      &:hover {
-        background-color: #F7F8FA;
-
-        .chat-list__chat-history-list__time {
-          display: none;
-        }
-        .chat-list__chat-history-list__config__button {
-          display: block;
-        }
-      }
       &.active {
         color: #3370FF;
         background-color: #F0F4FF;
@@ -294,11 +264,26 @@ onMounted(getChatList)
       li {
         cursor: pointer;
         padding: 4px 20px;
-        &:hover {
-          background-color: #F0F4FF;
-          color: #3370FF;
-        }
       }
+    }
+  }
+}
+</style>
+<style lang="less" scoped>
+@media (max-width: 960px) {
+  .chat-list {
+    padding: 0;
+    width: 100%;
+    border: none;
+    .chat-list__app {
+      display: none;
+    }
+    .chat-list__chat-config {
+      display: none;
+    }
+    .chat-list__chat-history-list {
+      max-height: calc(100% - 10px);
+      height: auto;
     }
   }
 }

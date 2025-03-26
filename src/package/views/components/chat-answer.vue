@@ -273,32 +273,15 @@ const open = (): Promise<string | false> => {
     font-size: 18px;
     cursor: pointer;
     display: none;
-    &:hover {
-      color: #12B76A;
-    }
-  }
-  &:hover {
-    .timer {
-      opacity: 1;
-    }
-    .bottom-copy-btn {
-      display: initial;
-    }
   }
 }
 .success {
-  &:hover {
-    color: #12B76A;
-  }
   &.active {
     background-color: #12B76A;
     color: #fff;
   }
 }
 .danger {
-  &:hover {
-    color: rgb(252, 150, 99);
-  }
   &.active {
     background-color: rgb(252, 150, 99);
     color: #fff;

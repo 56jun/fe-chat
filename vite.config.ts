@@ -26,6 +26,8 @@ export default defineConfig(({ mode, command }) => {
       'process.env': JSON.stringify(env),
     },
     server: {
+      host: true,
+      open: true,
       proxy: {
         '/api': {
           target: 'http://218.22.24.55:10000/',
@@ -51,7 +53,7 @@ export default defineConfig(({ mode, command }) => {
     },
     build: {
       lib: {
-        entry: path.resolve(__dirname, 'src/index.ts'),
+        entry: path.resolve(__dirname, 'src/package/index.ts'),
         name: 'fe-chaaat',
         fileName: (format) => `index.${format}.js`
       },
