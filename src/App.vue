@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import Layout from "@/views/layout.vue";
+import Layout from "@/package/views/layout.vue";
 </script>
 
 <style lang="less" scoped>

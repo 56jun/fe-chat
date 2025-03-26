@@ -1,6 +1,6 @@
 {
-  "name": "vue3",
-  "version": "0.0.0",
+  "name": "fe-chaaat",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,11 +12,24 @@
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix",
     "lint": "run-s lint:*",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "package": "npm run build --target ./ ./src/index.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/chaat.umd.js",
+  "module": "./dist/chaat.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/chaat.es.js",
+      "require": "./dist/chaat.umd.js"
+    }
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
     "@fortaine/fetch-event-source": "^3.0.6",
+    "@vueuse/core": "^12.8.2",
     "element-plus": "^2.9.6",
     "marked": "^14.1.4",
     "moment": "^2.30.1",

@@ -1,4 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
+import path from 'path'
 
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -11,7 +12,7 @@ import createSvgIcon from './vite/plugins/svg-icon'
 // https://vite.dev/config/
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd());
-  console.log('env.VITE_BASE_URL', env.VITE_BASE_URL)
+  console.log('env.VITE_BASE_URL', env)
 
   return {
     plugins: [
@@ -22,7 +23,7 @@ export default defineConfig(({ mode, command }) => {
     ],
     base: './',
     define: {
-      'process.env.VITE_BASE_URL': JSON.stringify(env.VITE_BASE_URL),
+      'process.env': JSON.stringify(env),
     },
     server: {
       proxy: {
@@ -31,12 +32,12 @@ export default defineConfig(({ mode, command }) => {
           changeOrigin: true,
         },
         [env.VITE_BASE_URL]: {
-          // target: 'https://zhgx.aihfgx.com/',
           // target:'http://2964pu8867.vicp.fun/',
           target:'https://zhgx.aihfgx.com/ai',
+          // target:'http://10.161.3.174:3000/',
           changeOrigin: true,
           rewrite(path) {
-            console.log('path',path)
+            console.log('path',path.replace(/\/deepseek/g, ''))
             return path.replace(/\/deepseek/g, '')
           }
         },
@@ -48,5 +49,22 @@ export default defineConfig(({ mode, command }) => {
         // '@': './src'
       },
     },
+    build: {
+      lib: {
+        entry: path.resolve(__dirname, 'src/index.ts'),
+        name: 'fe-chaaat',
+        fileName: (format) => `index.${format}.js`
+      },
+      rollupOptions: {
+        // 确保外部化处理那些你不想打包进库的依赖
+        external: ['vue'],
+        output: {
+          // 在 UMD 构建模式下为这些外部化的依赖提供一个全局变量
+          globals: {
+            vue: 'Vue'
+          }
+        },
+      }
+    }
   }
 })

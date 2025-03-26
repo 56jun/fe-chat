@@ -2,6 +2,7 @@ import { ref, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { clearHistories } from "@/api/api.ts";
 import { type ChatType } from "@/type/chat.ts"
+import moment from "moment";
 
 
 const activeChatId = ref<string>('')
@@ -16,18 +17,6 @@ export const useChat = () => {
       message.value = [];
     }
     activeChatId.value = id
-    if (message.value.length === 0) {
-      message.value.push(({
-        role: 'assistant',
-        value: [{
-          type: "text",
-          text: {
-            content: '您好，我是高新区任务督办小助手，可以精准查询项目进展情况，也可以做一些统计分析，欢迎向我提问！',
-            html: '您好，我是高新区任务督办小助手，可以精准查询项目进展情况，也可以做一些统计分析，欢迎向我提问！'
-          }
-        }]
-      }) as ChatType.ChatMessageType)
-    }
   }
 
   function setLoading(status: boolean) {
@@ -44,6 +33,26 @@ export const useChat = () => {
     message.value = []
   }
 
+  function resetChatCache() {
+    activeChatId.value = ''
+    chatList.value = []
+    message.value = []
+  }
+
+  function updateNewQuestion(chatId: string) {
+    const chat = chatList.value.find(chat => chat.chatId === chatId)
+    if (!chat) return;
+    // @ts-ignore
+    const lastQuestionIndex = message.value.findLastIndex((chat: ChatType.ChatMessageType) => chat.role === 'user')
+    if (lastQuestionIndex === -1) return;
+    const text = message.value[lastQuestionIndex].value?.map((x: ChatType.ChatMessageType) => {
+      if (x.type !== 'text') return '';
+      return x.text.content;
+    }).join('') || message.value[lastQuestionIndex].content
+    if (!text) return;
+    chat.title = text
+  }
+
   return {
     loading,
     activeChatId,
@@ -51,21 +60,28 @@ export const useChat = () => {
     setLoading,
     setActiveChatId,
     clearChatHistory,
-    message
+    message,
+    resetChatCache,
+    updateNewQuestion
   }
 }
 
-export const useAutoScroll = (el: HTMLElement) => {
-  const isAutoScroll = ref(true)
-  function onScroll() {
-    // @ts-ignore
-    const { scrollHeight, scrollTop, offsetHeight } = el
-    isAutoScroll.value = scrollTop + offsetHeight + 2 >= scrollHeight;
-  }
 
-  el.addEventListener('scroll', onScroll)
-  onUnmounted(() => {
-    el.removeEventListener('scroll', onScroll)
-  })
-  return { isAutoScroll }
+/**
+ * 使用moment计算时间距离现在的时间
+ * 1、如果在当天，就显示时+分
+ * 2、如果在当天，就显示时+分
+ * 3、如果在昨天，就显示昨天+时+分
+ * 4、如果在今年，就显示月+日
+ * */
+export function formatTime2shortText(time: string) {
+  const now = new Date().getTime()
+  const diff = now - (new Date(time)).getTime()
+  if (diff < 1000 * 60 * 60 * 24) {
+    return moment(time).format('HH:mm')
+  }
+  if (diff < 1000 * 60 * 60 * 24 * 2) {
+    return '昨天'
+  }
+  return moment(time).format('MM-DD')
 }

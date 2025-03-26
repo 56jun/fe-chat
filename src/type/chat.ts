@@ -4,7 +4,7 @@ export namespace ChatType {
     chatId: string
     customTitle: string
     title: string
-    updateTime: number
+    updateTime: string
     top: boolean
     type?: string
   }

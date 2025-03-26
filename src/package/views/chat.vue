@@ -1,9 +1,12 @@
 <template>
-  <div class="deepseek">
+  <div v-loading="requestLoading" class="deepseek">
     <div class="chat-header flex align-center">
-      <span>新对话</span>
-      <div class="flex align-center chat-header__record" style="margin-left: 10px;line-height: 0" type="primary">
-        <el-icon><Clock /></el-icon>
+      <span>{{ activeHistoryItem.title || '新对话' }}</span>
+      <div class="flex align-center chat-header__record"
+           style="margin-left: 10px;line-height: 0;flex-shrink: 0;" type="primary">
+        <el-icon>
+          <Clock/>
+        </el-icon>
         <span>&nbsp;{{ message.length }}条记录</span>
       </div>
     </div>
@@ -37,7 +40,6 @@
           />
         </template>
       </div>
-      <div ref="bottomLineRef"></div>
     </div>
     <div class="input-area">
       <div v-if="fileList.length" class="input-area__file-list">
@@ -50,6 +52,7 @@
       </div>
       <div class="input-area__input-box">
         <el-input type="textarea"
+                  ref="userInput"
                   v-model="form.question"
                   placeholder="输入您想问的问题"
                   class="textarea"
@@ -81,7 +84,8 @@
                 'has-stop': progressGlobal !== 'done'
               }"
         >
-          <img v-show="progressGlobal !== 'done'" @click="stopResponse" class="send-button--stop" :src="stopSvg"
+          <img v-show="progressGlobal !== 'done'" @click="stopResponse" class="send-button--stop"
+               :src="stopSvg"
                alt="">
           <img v-show="progressGlobal === 'done'" @click="sendMessageChat" class="send-button--send"
                :src="sendImg" alt="">
@@ -92,13 +96,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, nextTick, watch, type Ref, computed } from "vue";
+import {
+  ref,
+  reactive,
+  onMounted,
+  onUnmounted,
+  nextTick,
+  watch,
+  unref,
+  computed,
+  defineProps
+} from "vue";
 import { ElInput, ElMessage, type UploadFile } from "element-plus";
 import FileIcon from "./file-icon.vue";
 import { marked } from 'marked'
 import ChatAnswer from "./components/chat-answer.vue";
 
-import { copyDomText, throttle } from "@/utils/config";
+import { copyDomText } from "@/utils/config";
 import { baseURL, getPaginationRecords, uploadFile } from "@/api/api.ts";
 
 import sendImg from "@/assets/send.png";
@@ -106,37 +120,41 @@ import Fujian from "@/assets/fujian.png";
 import stopSvg from "@/assets/icons/svg/stop.svg";
 import CloseTag from "@/assets/close-tag.png";
 
-import { getConfig } from "@/stores/config.ts";
-import { useAutoScroll, useChat } from "@/stores/userChat.ts";
+import { useChat } from "@/stores/userChat.ts";
 import { streamFetch } from "@/utils/chat-fetch.ts";
 import { type ChatType, SseResponseEventEnum } from "@/type/chat.ts";
+import useChatStore from '@/store/modules/chat.ts'
 
-const { activeChatId, message } = useChat()
-const appConfig = getConfig()
+const props = defineProps<{
+  customUid: string,
+}>()
+const customUid = computed(() => unref(props.customUid))
+
+const { activeChatId, message, history, updateNewQuestion } = useChat()
+
+const store = useChatStore()
+const appConfig = computed(() => store.getAppConfig)
 
 const needUpdateParentChatListTitle = ref(false)
 
-const bottomLineRef = ref()
+const userInput = ref()
 const loading = ref(false)
 const uploadLoading = ref(false)
 const answerStartRender = ref(false)
 const reasoningAnswerDone = ref(false)
-const customUid = ref('SongFei')
 const progressGlobal = computed(() => {
   const item = message.value[message.value.length - 1]
   return item?.progress || 'done'
 })
-const dataCache = ref<any[]>([])
 const compositionInputStatus = ref(false)
 const form = reactive({
   question: '',
 })
-const messages = ref<ChatType.ChatMessageType[]>([])
 const fileList = ref<UploadFile[]>([])
 const abortController = ref<null | AbortController>(null)
 
-const answerWindowRef = ref<HTMLDivElement>()
-let isAutoScroll: Ref;
+const answerWindowRef = ref<HTMLElement>()
+const isAutoScroll = ref(true);
 
 function keyDownEnter(event: Event | KeyboardEvent) {
   if ("shiftKey" in event && event.shiftKey) return;
@@ -155,9 +173,11 @@ async function sendMessageChat() {
   }
   const url = baseURL + '/api/v1/chat/completions';
 
-  const { apiKey, ...configParams } = getConfig() || {}
-
-  let messageItem: ChatType.ChatMessageType = { role: 'user', content: form.question, progress: 'init' }
+  let messageItem: ChatType.ChatMessageType = {
+    role: 'user',
+    content: form.question,
+    progress: 'init'
+  }
   if (fileList.value.length > 0) {
     const fileMessageList = fileList.value.map(x => {
       return { type: 'file_url', name: x.name, url: x.url }
@@ -172,9 +192,6 @@ async function sendMessageChat() {
     fileList.value = []
   }
   message.value.push(messageItem);
-  messages.value = [{ ...messageItem }]
-  dataCache.value = [];
-  let dataResponseTimes = 0;
   const params = {
     chatId: activeChatId.value,
     customUid: customUid.value,// 自定义的用户 ID。在历史记录中，该条记录的使用者会显示为 xxxxxx
@@ -186,13 +203,14 @@ async function sendMessageChat() {
     stream: true,
     // 是否返回中间值（模块状态，响应的完整结果等），stream 模式下会通过 event 进行区分，非 stream 模式结果保存在 responseData 中。
     detail: true,
-    // 聊天输入框上面的tab切换内容部分
-    ...configParams,
+    appId: appConfig.value?.appId,
+    appName: appConfig.value?.appName,
   };
   try {
     message.value.push({
       role: 'assistant',
       progress: 'init',
+      responseText: '',
       value: []
     });
     loading.value = true;
@@ -210,7 +228,7 @@ async function sendMessageChat() {
       data: params,
       onMessage,
       abortCtrl: abortController.value,
-      apiKey
+      apiKey: appConfig.value.apiKey,
     }).catch((err) => {
       console.error(err)
       loading.value = false;
@@ -219,9 +237,9 @@ async function sendMessageChat() {
       lastItem.responseText = ''
       lastItem.progress = 'done'
       if (!lastItem.value[0]?.html) {
-        lastItem.html = `<span>${err}</span>`
+        lastItem.html = `<span>${ err }</span>`
       }
-      nextTick(scrollToBottom)
+      scrollToBottom()
       console.log('---Error---')
     })
   } catch (e) {
@@ -230,6 +248,7 @@ async function sendMessageChat() {
 }
 
 let lastValidResponseType = ''
+
 function onMessage(msg: ChatType.ResponseQueueItemType) {
   const lastItem: ChatType.ChatMessageType = message.value[message.value.length - 1]
 
@@ -253,7 +272,7 @@ function onMessage(msg: ChatType.ResponseQueueItemType) {
       lastReasoning.reasoning.content += (msg.reasoningText || '')
       lastReasoning.reasoning.html = marked.parse(lastReasoning.reasoning.content)
 
-    } else if(msg.text) {
+    } else if (msg.text) {
       if (lastValidResponseType !== 'text') {
         lastItem.value.push({
           type: 'text',
@@ -272,9 +291,6 @@ function onMessage(msg: ChatType.ResponseQueueItemType) {
       lastText.text.content += (msg.text || '')
       lastText.text.html = marked.parse(lastText.text.content || '')
     }
-    if (isAutoScroll.value) {
-      scrollToBottom()
-    }
   } else if (msg.event === SseResponseEventEnum.flowNodeStatus) {
     if (!lastValidResponseType) {
       lastItem.progress = 'preThinking'
@@ -291,10 +307,11 @@ function onMessage(msg: ChatType.ResponseQueueItemType) {
     abortController.value = null;
     lastItem.responseText = ''
     lastItem.progress = 'done'
-    getMessage(activeChatId.value)
-    nextTick(scrollToBottom)
+    // getMessage(activeChatId.value)
     console.log('finally');
+    updateNewQuestion(activeChatId.value)
   }
+  scrollToBottom()
 }
 
 function stopResponse() {
@@ -332,13 +349,15 @@ async function onChange(file: File) {
   } as UploadFile)
 }
 
-const scrollToBottom = throttle(() => {
-  // bottomLineRef.value.scrollTop = 0
-  bottomLineRef.value?.scrollIntoView({
-    behavior: 'smooth',
-    block: 'end',
-  })
-}, 25)
+const scrollToBottom = () => {
+  if (isAutoScroll.value) {
+    nextTick(() => {
+      if (answerWindowRef.value) {
+        answerWindowRef.value.scrollTop = answerWindowRef.value.scrollHeight
+      }
+    })
+  }
+}
 
 function copyText(text: string | undefined) {
   if (!text) return;
@@ -347,13 +366,17 @@ function copyText(text: string | undefined) {
   }
 }
 
+const requestLoading = ref(false);
+
 async function getMessage(chatId: string) {
+  requestLoading.value = true
   const result: any = await getPaginationRecords({
     offset: 0,
     pageSize: 20,
-    appId: appConfig.appId,
+    appId: appConfig.value.appId,
     chatId,
   })
+  requestLoading.value = false
   message.value = (result?.data?.list || []).map((item: ChatType.ChatMessageType) => {
     if (item.obj === 'AI') {
       const reasoningContentIndex = item.value.findIndex((x: any) => x.type === 'reasoning')
@@ -369,7 +392,7 @@ async function getMessage(chatId: string) {
         }).map((x: ChatType.ResponseAnswerItemType) => {
           if (x.type === 'text') {
             x.text.html = marked.parse(x.text.content) as string;
-          } else if(x.type === 'reasoning') {
+          } else if (x.type === 'reasoning') {
             x.hide = false
             x.reasoning.html = marked.parse(x.reasoning.content) as string;
           }
@@ -386,7 +409,7 @@ async function getMessage(chatId: string) {
               type: x.type,
               text: x.text.content,
             }
-          } else if(x.type === 'file') {
+          } else if (x.type === 'file') {
             return {
               type: 'file_url',
               name: x.file.name,
@@ -398,28 +421,41 @@ async function getMessage(chatId: string) {
     }
   })
   needUpdateParentChatListTitle.value = message.value.length === 0
-  nextTick(scrollToBottom)
+  scrollToBottom()
+  // 自动聚焦
+  nextTick(() => {
+    userInput.value?.focus();
+  })
 }
 
+//@ts-ignore
+const activeHistoryItem = ref<ChatType.HistoryChatMessageType>({})
 watch(() => activeChatId?.value, (chatId) => {
   stopResponse()
   if (!chatId) {
     message.value = []
     return;
   }
+  const item = history.value.find((x) => x.chatId === activeChatId.value)
+  if (!item) return;
+  activeHistoryItem.value = item as ChatType.HistoryChatMessageType;
   getMessage(chatId)
 }, { immediate: true })
 
-onMounted(() => {
+function onScroll() {
   if (answerWindowRef.value) {
-    const ob = useAutoScroll(answerWindowRef.value)
-    isAutoScroll = ob.isAutoScroll
+    const { scrollHeight, scrollTop, offsetHeight } = answerWindowRef.value
+    isAutoScroll.value = scrollTop + offsetHeight + 2 >= scrollHeight;
   }
-  nextTick(scrollToBottom)
+}
+
+onMounted(() => {
+  answerWindowRef.value?.addEventListener('scroll', onScroll);
+  scrollToBottom()
 })
 
 onUnmounted(() => {
-  // (document.querySelector('.answer-box') as Element).removeEventListener('scroll', onScroll);
+  answerWindowRef.value?.removeEventListener('scroll', onScroll)
 })
 </script>
 
