@@ -71,6 +71,7 @@ const props = defineProps<{
     apiKey: string
   }
   customUid: string
+  apiPrefix: string
 }>()
 const appConfig = computed(() => props.appConfig)
 
@@ -113,10 +114,10 @@ async function removeChatItem(item: ChatType.HistoryChatMessageType) {
       pageSize: 20,
       appId: appConfig.value.appId,
       chatId: activeChatId.value,
-    })
+    }, props.apiPrefix)
     if (result.data.total === 0) return;
   }
-  const res = await delHistory(item.chatId)
+  const res = await delHistory(item.chatId, props.apiPrefix)
   if (!res) return;
   ElMessage.success('操作成功')
   const index = history.value.findIndex((x) => x.chatId === item.chatId)
@@ -150,7 +151,7 @@ async function getChatList() {
     offset: (pageInfo.page - 1) * pageInfo.pageSize,
     pageSize: 20,
     "source": ["online", "api"]
-  })
+  }, props.apiPrefix)
   setLoading(false)
   if (!result) return;
   const list = result.data?.list || []
@@ -212,6 +213,8 @@ watch(() => props.appConfig.appId, (value) => {
   &__chat-history-list {
     max-height: calc(100% - 110px);
     overflow: auto;
+    margin-right: -20px;
+    padding-right: 20px;
     &.no-more {
       &:after {
         content: '到底了~';
@@ -230,6 +233,7 @@ watch(() => props.appConfig.appId, (value) => {
       user-select: none;
       border-radius: 6px;
       transition: all .3s;
+      font-size: var(--font-base-size);
       .el-icon {
         flex: 0;
       }
@@ -272,6 +276,7 @@ watch(() => props.appConfig.appId, (value) => {
 <style lang="less" scoped>
 @media (max-width: 960px) {
   .chat-list {
+    margin-top: -20px;
     padding: 0;
     width: 100%;
     border: none;
@@ -284,6 +289,16 @@ watch(() => props.appConfig.appId, (value) => {
     .chat-list__chat-history-list {
       max-height: calc(100% - 10px);
       height: auto;
+      li {
+        padding: 6px;
+        .el-icon {
+          display: none;
+        }
+      }
+      &__time {
+        color: #919191;
+        font-size: 14px;
+      }
     }
   }
 }

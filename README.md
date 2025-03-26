@@ -1,32 +1,68 @@
 ## 项目名称
-> 请介绍一下你的项目吧  
+> 高新数科chat对话插件 
 
+## 插件使用说明
+### 前置源配置
 
+* node >= 18，推荐v20.14.0
+* 访问[云效](https://packages.aliyun.com/npm/npm-registry/guide)，根据提示配置npm源，推荐使用`nrm`工具进行源切换
+```command
+$ npm config set registry=https://packages.aliyun.com/67becf0ab5800b3679b88842/npm/npm-registry/
 
-## 运行条件
-> 列出运行该项目所必须的条件和相关依赖  
-* 条件一
-* 条件二
-* 条件三
+// 命令执行后根据文档配置输入账号密码
+$ npm login
+```
+### 安装
+```command
+// 拉取代码
+$ pnpm install fe-chaaat
+```
+### 使用方式，以vue3项目为例
+```vue
+<template>
+  <Layout app-config="必填，app的配置项对象，格式为{appName: string, appId: string, apiKey: string}"
+          custom-uid="必填，自定义的用户id"
+          show-back="选填，是否展示返回按钮"
+          api-prefix="选填，chat对话api自定义的上下文，默认值为：'/deepseek'"
+          @back="选填，展示返回按钮时，点击返回按钮触发的事件"
+          @gen-chat-id="选填，自定义生成chatId的方法，返回值为chatId"
+  />  
+</template>
+<script>
+  // Layout组件为对话插件的主组件，通过useChat方法获取对话插件的相关方法
+  import { Layout, useChat } from 'fe-chaaat'
+  
+  const {
+    loading, // 加载状态
+    activeChatId, // 当前活跃的chatId
+    history,// 聊天记录列表
+    setLoading,// 设置加载状态
+    setActiveChatId,// 设置当前活跃的chatId
+    clearChatHistory,// 清空聊天记录
+    message,// 当前对话框输入的消息
+    resetChatCache,// 重置聊天缓存
+    updateNewQuestion,// 更新新问题
+    newChat,// 新建对话
+  } = useChat()
+</script>
+```
 
+## 开发 + 发布流程
+> 需要进行 前置源配置
+* 修改src/App.vue文件进行测试
+```
+// 执行打包命令
+$ pnpm package
 
+// 发布node包，!!!请先修改package.json中的版本号
+$ npm publish
+
+```
 
 ## 运行说明
-> 说明如何运行和使用你的项目，建议给出具体的步骤说明
-* 操作一
-* 操作二
-* 操作三  
-
-
-
-## 测试说明
-> 如果有测试相关内容需要说明，请填写在这里  
-
-
-
-## 技术架构
-> 使用的技术框架或系统架构图等相关说明，请填写在这里  
+* pnpm i
+* pnpm dev
 
 
 ## 协作者
-> 高效的协作会激发无尽的创造力，将他们的名字记录在这里吧
+> SongFei,GuZhen

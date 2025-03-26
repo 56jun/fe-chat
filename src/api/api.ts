@@ -1,9 +1,6 @@
 import axios from 'axios';
 import { getHeader, getConfig } from "@/stores/config.ts";
 
-// @ts-ignore
-export const baseURL = process.env.VITE_BASE_URL
-
 // todo 上传文件
 export async function uploadFile(formData: FormData): Promise<{ data: { yswjmc: string, wjfwurl: string } } | false> {
   return new Promise((resolve) => {
@@ -24,7 +21,7 @@ export async function uploadFile(formData: FormData): Promise<{ data: { yswjmc: 
   })
 }
 
-export async function getHistories(data: Object) {
+export async function getHistories(data: Object, baseURL = '') {
   return new Promise((resolve) => {
     axios.post(baseURL + '/api/core/chat/getHistories', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
@@ -45,7 +42,7 @@ export async function getPaginationRecords(data: {
   "pageSize": number,
   "appId": string,
   "chatId": string,
-}) {
+}, baseURL = '') {
   return new Promise((resolve) => {
     axios.post(baseURL + '/api/core/chat/getPaginationRecords', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
@@ -61,7 +58,7 @@ export async function getPaginationRecords(data: {
 }
 
 // 修改对话标题
-export async function updateHistory(data: Object) {
+export async function updateHistory(data: Object, baseURL = '') {
   return new Promise((resolve) => {
     axios.post(baseURL + '/api/core/chat/getHistories', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
@@ -85,7 +82,7 @@ export async function updateUserFeedback(data: {
   userGoodFeedback?: string
   // 取消踩时不填此参数
   userBadFeedback?: string
-}) {
+}, baseURL = '') {
   return new Promise((resolve) => {
     axios.post(baseURL + '/api/core/chat/feedback/updateUserFeedback', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
@@ -101,7 +98,7 @@ export async function updateUserFeedback(data: {
 }
 
 // 删除当前对话
-export async function delHistory(chatId: string) {
+export async function delHistory(chatId: string, baseURL = '') {
   return new Promise((resolve) => {
     const appConfig = getConfig()
     axios.delete(baseURL + `/api/core/chat/delHistory?appId=${appConfig.appId}&chatId=${chatId}`, { headers: getHeader() }).then((response) => {
@@ -118,7 +115,7 @@ export async function delHistory(chatId: string) {
 }
 
 // 清空历史记录
-export async function clearHistories() {
+export async function clearHistories(baseURL = '') {
   return new Promise((resolve) => {
     const appConfig = getConfig()
     axios.delete(baseURL + `/api/core/chat/clearHistories?appId=${appConfig.appId}`, { headers: getHeader() }).then((response) => {

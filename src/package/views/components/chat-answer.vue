@@ -185,14 +185,14 @@ const open = (): Promise<string | false> => {
   .answer-item {
     width: 100%;
     min-height: 20px;
-    padding: 12px;
+    padding: 0 12px;
     margin-top: 10px;
     word-break: break-all;
     position: relative;
     display: inline-block;
     background-color: #F7F8FA;
     color: #000;
-    font-size: 14px;
+    font-size: var(--font-base-size);
     border-radius: 0 8px 8px;
     .markdown-body {
       * {
@@ -294,6 +294,14 @@ const open = (): Promise<string | false> => {
 
   50% {
     opacity: 1
+  }
+}
+</style>
+<style lang="less" scoped>
+@media (max-width: 960px) {
+  .answer-content__assistant {
+    .answer-item {
+    }
   }
 }
 </style>

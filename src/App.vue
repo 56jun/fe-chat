@@ -1,8 +1,9 @@
 <template>
-  <Layout :appConfig="appConfig"
+  <Layout :app-config="appConfig"
           custom-uid="3213"
           :show-back="false"
           @back="back"
+          api-prefix="/deepseek"
   />
 </template>
 

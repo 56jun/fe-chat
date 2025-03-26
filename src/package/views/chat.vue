@@ -7,7 +7,7 @@
         <img @click="viewDrawer"
              class="chat-header__chat-history"
              src="@/assets/app-config.webp"
-             height="20px"
+             height="20"
         >
         <div class="flex align-center chat-header__record"
              style="margin-left: 10px;line-height: 0;flex-shrink: 0;" type="primary">
@@ -107,7 +107,10 @@
       direction="ltr"
       size="70%"
     >
-      <ChatList :app-config="appConfig" custom-uid="123" @select="() => drawer = false"/>
+      <ChatList :api-prefix="apiPrefix"
+                :custom-uid="customUid"
+                :app-config="appConfig"
+                @select="() => drawer = false"/>
     </el-drawer>
   </div>
 </template>
@@ -133,7 +136,7 @@ import { marked } from 'marked'
 import ChatAnswer from "./components/chat-answer.vue";
 
 import { copyDomText } from "@/utils/config";
-import { baseURL, getPaginationRecords, uploadFile } from "@/api/api.ts";
+import { getPaginationRecords, uploadFile } from "@/api/api.ts";
 
 import sendImg from "@/assets/send.png";
 import Fujian from "@/assets/fujian.png";
@@ -152,6 +155,7 @@ const props = defineProps<{
     appName: string
     apiKey: string
   }
+  apiPrefix: string
   customUid: string
   showBack: boolean
 }>()
@@ -211,7 +215,7 @@ async function sendMessageChat() {
   if (loading.value || !form.question || ['preThinking', 'outputting'].includes(progressGlobal.value)) {
     return false;
   }
-  const url = baseURL + '/api/v1/chat/completions';
+  const url = props.apiPrefix + '/api/v1/chat/completions';
 
   let messageItem: ChatType.ChatMessageType = {
     role: 'user',
@@ -415,7 +419,7 @@ async function getMessage(chatId: string) {
     pageSize: 20,
     appId: appConfig.value.appId,
     chatId,
-  })
+  }, props.apiPrefix)
   requestLoading.value = false
   message.value = (result?.data?.list || []).map((item: ChatType.ChatMessageType) => {
     if (item.obj === 'AI') {
@@ -559,7 +563,7 @@ onUnmounted(() => {
       word-break: break-all;
       position: relative;
       display: inline-block;
-      font-size: 14px;
+      font-size: var(--font-base-size);
       margin-right: 10px;
       margin-bottom: 10px;
       background: #2D7CFF;
@@ -578,7 +582,7 @@ onUnmounted(() => {
         border-radius: 5px;
         color: #3b2300;
         margin: 2px 2px 5px;
-        font-size: 12px;
+        font-size: var(--font-base-size);
 
         &--icon {
           width: 14px;
@@ -606,7 +610,7 @@ onUnmounted(() => {
       display: inline-block;
       background-color: #F7F8FA;
       color: #000;
-      font-size: 14px;
+      font-size: var(--font-base-size);
       border-radius: 0px 8px 8px;
       :deep(code) {
         white-space: normal;
@@ -668,7 +672,7 @@ onUnmounted(() => {
         position: relative;
         background-color: white;
         border-radius: 8px;
-        font-size: 13px;
+        font-size: var(--font-base-size);
         border: 1px solid rgba(0, 0, 0, 0.12);
 
         & + .input-area__file {
@@ -715,7 +719,7 @@ onUnmounted(() => {
           border-radius: 15px;
           border: 1px solid #FFFFFF;
           color: #363638;
-          font-size: 13px;
+          font-size: var(--font-base-size);
           transition: all .3s;
 
           img {
