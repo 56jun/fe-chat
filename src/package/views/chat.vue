@@ -18,7 +18,7 @@
         </div>
       </div>
       <div class="chat-header__app-name">{{ appConfig.appName || '' }}</div>
-      <el-icon class="chat-header__new-chat" @click="newChat(appConfig)" size="22"><CirclePlus /></el-icon>
+      <el-icon class="chat-header__new-chat" @click="newChat({...appConfig, apiPrefix})" size="22"><CirclePlus /></el-icon>
     </div>
     <div ref="answerWindowRef" class="answer-box">
       <div class="answer-content">
@@ -45,6 +45,8 @@
           <!--          回答-->
           <ChatAnswer v-if="item.role === 'assistant'"
                       :activeChatId="activeChatId"
+                      :api-prefix="apiPrefix"
+                      :appConfig="appConfig"
                       :item="item"
                       @updateFeedback="getMessage(activeChatId)"
           />

@@ -7,7 +7,7 @@
       <div class="chat-list__app-name">{{ appConfig.appName }}</div>
     </div>
     <div class="chat-list__chat-config">
-      <el-button @click="newChat(appConfig)" class="chat-list__chat-config__new-chat" :icon="ChatDotRound"
+      <el-button @click="newChat({...appConfig, apiPrefix})" class="chat-list__chat-config__new-chat" :icon="ChatDotRound"
                  round>新对话
       </el-button>
       <el-popconfirm @confirm="clearChatList"
@@ -97,7 +97,7 @@ watch(() => arrivedState.bottom, (value) => {
 })
 
 async function clearChatList() {
-  await clearChatHistory()
+  await clearChatHistory(props.apiPrefix)
   getChatList()
 }
 
@@ -124,7 +124,7 @@ async function removeChatItem(item: ChatType.HistoryChatMessageType) {
   if (index === -1) return;
   history.value.splice(index, 1)
   if (history.value.length === 0) {
-    return newChat(appConfig.value, true)
+    return newChat({...appConfig.value, apiPrefix: props.apiPrefix}, true)
   }
   history.value = []
   setActiveChatId(history.value[0]?.chatId)
@@ -158,7 +158,7 @@ async function getChatList() {
   history.value = history.value.concat(list)
   pageInfo.total = result.data.total || 0
   if (!list || list.length === 0) {
-    newChat(appConfig.value, true)
+    newChat({...appConfig.value, apiPrefix: props.apiPrefix}, true)
   } else if (!activeChatId.value) {
     setActiveChatId(list[0].chatId)
   }

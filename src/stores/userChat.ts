@@ -24,9 +24,9 @@ export const useChat = () => {
     loading.value = status
   }
 
-  async function clearChatHistory() {
+  async function clearChatHistory(apiPrefix = '') {
     setLoading(true)
-    const res = await clearHistories()
+    const res = await clearHistories(apiPrefix)
     setLoading(false)
     if (!res) return;
     ElMessage.success('操作成功')
@@ -54,7 +54,7 @@ export const useChat = () => {
     chat.title = text
   }
 
-  async function newChat(appConfig: { appId: string; appName: string; apiKey: string; }, force: boolean = false) {
+  async function newChat(appConfig: { appId: string; appName: string; apiKey: string; apiPrefix: string }, force: boolean = false) {
     if (!force) {
       setLoading(true)
       const result: any = await getPaginationRecords({
@@ -62,7 +62,7 @@ export const useChat = () => {
         pageSize: 20,
         appId: appConfig.appId,
         chatId: activeChatId.value,
-      })
+      }, appConfig.apiPrefix)
       setLoading(false)
       if (result.data.total === 0) {
         return;

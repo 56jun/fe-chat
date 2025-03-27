@@ -11,6 +11,7 @@
       </div>
       <ul v-else class="reset-style answer-content__assistant__config-bar">
         <li><el-icon @click="copyText" title="复制"><CopyDocument/></el-icon></li>
+<!--    点赞 -->
         <li @click="likeOrDislike('Y')"
             v-if="!item.userBadFeedback"
             class="success"
@@ -18,6 +19,7 @@
         >
           <svg-icon icon-class="like" font-size="18"></svg-icon>
         </li>
+<!--    点踩    -->
         <li @click="likeOrDislike('N')"
             v-if="!item.userGoodFeedback"
             class="danger"
@@ -70,7 +72,7 @@
 </template>
 
 <script lang="ts" setup>
-import { defineProps, defineEmits } from 'vue'
+import { defineProps, defineEmits, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
 import { copyDomText } from "@/utils/config.ts";
@@ -82,10 +84,17 @@ import { formatTime2shortText } from "@/utils/index.ts";
 
 
 const props = defineProps<{
-  item: ChatType.ChatMessageType,
-  activeChatId: string,
+  appConfig: {
+    appId: string
+    appName: string
+    apiKey: string
+  }
+  item: ChatType.ChatMessageType
+  activeChatId: string
+  apiPrefix: string
 }>()
 
+const appConfig = computed(() => props.appConfig)
 const emits = defineEmits(['updateFeedback'])
 
 function copyText() {
@@ -99,7 +108,6 @@ function copyText() {
 }
 
 async function likeOrDislike(type: 'Y' | 'N') {
-  const appConfig = getConfig()
   const params: {
     appId: string
     chatId: string
@@ -109,7 +117,7 @@ async function likeOrDislike(type: 'Y' | 'N') {
     // 取消踩时不填此参数
     userBadFeedback?: string
   } = {
-    appId: appConfig.appId,
+    appId: appConfig.value.appId,
     chatId: props.activeChatId,
     dataId: props.item.dataId,
     // // 取消点赞时不填此参数
@@ -125,7 +133,7 @@ async function likeOrDislike(type: 'Y' | 'N') {
     if (!feedback) return;
     params.userBadFeedback = feedback
   }
-  const result = await updateUserFeedback(params)
+  const result = await updateUserFeedback(params, props.apiPrefix)
   if (!result) return;
   emits('updateFeedback')
 }
