@@ -40,7 +40,7 @@ const props = defineProps({
   },
   showBack: {
     type: Boolean,
-    default: true
+    default: false
   },
   genChatId: {
     type: Function,

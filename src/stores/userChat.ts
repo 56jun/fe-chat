@@ -10,6 +10,7 @@ const activeChatId = ref<string>('')
 const chatList = ref<ChatType.HistoryChatMessageType[]>([])
 const loading = ref<boolean>(false)
 const message = ref<ChatType.ChatMessageType[]>([])
+const currentChatTitle = ref<string>('')
 
 export const useChat = () => {
 
@@ -46,12 +47,13 @@ export const useChat = () => {
     // @ts-ignore
     const lastQuestionIndex = message.value.findLastIndex((chat: ChatType.ChatMessageType) => chat.role === 'user')
     if (lastQuestionIndex === -1) return;
-    const text = message.value[lastQuestionIndex].value?.map((x: ChatType.ChatMessageType) => {
-      if (x.type !== 'text') return '';
-      return x.text.content;
-    }).join('') || message.value[lastQuestionIndex].content
+    const item = message.value[lastQuestionIndex]
+    const text = Array.isArray(item.content) ? item.content.filter(x => x.type === 'text').map(x => x.text).join('')
+      : item.content
     if (!text) return;
+    console.log('text', text)
     chat.title = text
+    currentChatTitle.value = text
   }
 
   async function newChat(appConfig: { appId: string; appName: string; apiKey: string; baseURL: string }, force: boolean = false) {
@@ -93,6 +95,7 @@ export const useChat = () => {
     resetChatCache,
     updateNewQuestion,
     newChat,
+    currentChatTitle,
   }
 }
 

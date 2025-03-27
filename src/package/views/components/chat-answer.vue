@@ -231,6 +231,7 @@ const open = (): Promise<string | false> => {
     }
     &__reasoning {
       max-width: 100%;
+      padding-top: 10px;
       &__title {
         display: inline-block;
         padding: 5px 12px;

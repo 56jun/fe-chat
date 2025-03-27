@@ -3,7 +3,7 @@
     <div class="chat-header flex align-center">
       <div class="flex align-center chat-header__left">
         <el-icon v-if="showBack" size="22" @click="onBack" style="margin-right: 10px;"><ArrowLeftBold /></el-icon>
-        <span class="chat-header__chat-title">{{ (activeHistoryItem.title || '新对话').slice(0, 20) }}</span>
+        <span class="chat-header__chat-title">{{ (currentChatTitle || '新对话').slice(0, 20) }}</span>
         <img @click="viewDrawer"
              class="chat-header__chat-history"
              src="@/assets/app-config.webp"
@@ -81,8 +81,9 @@
             multiple
             accept=".txt,.docx,.csv,.xlsx,.pdf,.md,.html,.pptx"
             :show-file-list="false"
-            :before-upload="onChange"
+            :on-change="onChange"
             :disabled="uploadLoading"
+            :auto-upload="false"
           >
             <img :src="Fujian" :class="{ loading: uploadLoading }" alt="">
           </el-upload>
@@ -154,7 +155,7 @@ const showBack = computed(() => props.showBack)
 
 const emits = defineEmits(["back"])
 
-const { activeChatId, message, history, updateNewQuestion, newChat } = useChat()
+const { activeChatId, message, history, updateNewQuestion, newChat, currentChatTitle } = useChat()
 
 const needUpdateParentChatListTitle = ref(false)
 
@@ -363,20 +364,24 @@ function deleteFile(index: number) {
   fileList.value.splice(index, 1)
 }
 
-async function onChange(file: File) {
+async function onChange(file: UploadFile) {
   if (!checkSuffix(file?.name)) {
     return ElMessage.warning('请选择以下类型的文件：txt、docx、csv、xlsx、pdf、md、html、pptx等')
   }
   const formData = new FormData();
   uploadLoading.value = true
-  formData.append('file', file)
+  // @ts-ignore
+  formData.append('file', file?.raw)
   const result = await uploadFile(formData)
-  uploadLoading.value = false
-  if (!result) return false;
+  if (!result) {
+    uploadLoading.value = false
+    return false
+  }
   fileList.value.push({
     name: result.data.yswjmc,
     url: result.data.wjfwurl
   } as UploadFile)
+  uploadLoading.value = false
 }
 
 const scrollToBottom = () => {
@@ -423,7 +428,7 @@ async function getMessage(chatId: string) {
           if (x.type === 'text') {
             x.text.html = marked.parse(x.text.content) as string;
           } else if (x.type === 'reasoning') {
-            x.hide = false
+            x.hide = true
             x.reasoning.html = marked.parse(x.reasoning.content) as string;
           }
           return x
@@ -458,17 +463,12 @@ async function getMessage(chatId: string) {
   })
 }
 
-//@ts-ignore
-const activeHistoryItem = ref<ChatType.HistoryChatMessageType>({})
 watch(() => activeChatId?.value, (chatId) => {
   stopResponse()
   if (!chatId) {
     message.value = []
     return;
   }
-  const item = history.value.find((x) => x.chatId === activeChatId.value)
-  if (!item) return;
-  activeHistoryItem.value = item as ChatType.HistoryChatMessageType;
   getMessage(chatId)
 }, { immediate: true })
 

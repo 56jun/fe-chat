@@ -233,6 +233,11 @@ watch(() => appConfig.appId, (value) => {
       & + li {
         margin-top: 8px;
       }
+      &:hover {
+        .chat-list__chat-history-list__config__button {
+          display: initial;
+        }
+      }
       &.active {
         color: #3370FF;
         background-color: #F0F4FF;

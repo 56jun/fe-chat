@@ -20,6 +20,11 @@ $ pnpm install fe-chaaat
 ### 使用方式，以vue3项目为例
 ```vue
 <template>
+  <Layout :app-config="appConfig"
+          :page-config="config"
+          :show-back="false"
+          @back="back"
+  />
   <Layout app-config="必填，app的配置项对象，格式为{appName: string, appId: string, apiKey: string}"
           custom-uid="必填，自定义的用户id"
           show-back="选填，是否展示返回按钮"
