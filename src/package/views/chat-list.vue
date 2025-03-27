@@ -7,7 +7,7 @@
       <div class="chat-list__app-name">{{ appConfig.appName }}</div>
     </div>
     <div class="chat-list__chat-config">
-      <el-button @click="newChat({...appConfig, apiPrefix})" class="chat-list__chat-config__new-chat" :icon="ChatDotRound"
+      <el-button @click="newChat(appConfig)" class="chat-list__chat-config__new-chat" :icon="ChatDotRound"
                  round>新对话
       </el-button>
       <el-popconfirm @confirm="clearChatList"
@@ -55,25 +55,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, defineEmits, reactive, ref, watch } from 'vue'
+import { computed, defineEmits, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useScroll } from '@vueuse/core'
 // 导入垃圾桶图标
 import { ChatDotRound, Delete } from "@element-plus/icons-vue";
-import { useChat, formatTime2shortText } from "@/stores/userChat";
+import { useChat, useAppConfig, formatTime2shortText } from "@/stores/userChat";
 import { delHistory, getHistories, getPaginationRecords } from "@/api/api";
 import type { ChatType } from "@/type/chat.ts";
 
-const props = defineProps<{
-  appConfig: {
-    appId: string
-    appName: string
-    apiKey: string
-  }
-  customUid: string
-  apiPrefix: string
-}>()
-const appConfig = computed(() => props.appConfig)
+const { appConfig } = useAppConfig()
 
 const emits = defineEmits(["select"]);
 
@@ -97,7 +88,7 @@ watch(() => arrivedState.bottom, (value) => {
 })
 
 async function clearChatList() {
-  await clearChatHistory(props.apiPrefix)
+  await clearChatHistory()
   getChatList()
 }
 
@@ -112,19 +103,19 @@ async function removeChatItem(item: ChatType.HistoryChatMessageType) {
     const result: any = await getPaginationRecords({
       offset: 0,
       pageSize: 20,
-      appId: appConfig.value.appId,
+      appId: appConfig.appId,
       chatId: activeChatId.value,
-    }, props.apiPrefix)
+    })
     if (result.data.total === 0) return;
   }
-  const res = await delHistory(item.chatId, props.apiPrefix)
+  const res = await delHistory(item.chatId)
   if (!res) return;
   ElMessage.success('操作成功')
   const index = history.value.findIndex((x) => x.chatId === item.chatId)
   if (index === -1) return;
   history.value.splice(index, 1)
   if (history.value.length === 0) {
-    return newChat({...appConfig.value, apiPrefix: props.apiPrefix}, true)
+    return newChat(appConfig, true)
   }
   history.value = []
   setActiveChatId(history.value[0]?.chatId)
@@ -143,22 +134,22 @@ const infiniteScrollDisabled = computed(() => {
 })
 
 async function getChatList() {
-  if (!appConfig.value.appId) return false;
+  if (!appConfig.appId) return false;
   setLoading(true)
   const result: any = await getHistories({
-    customUid: props.customUid,
-    appId: appConfig.value.appId,
+    customUid: appConfig.customUid,
+    appId: appConfig.appId,
     offset: (pageInfo.page - 1) * pageInfo.pageSize,
     pageSize: 20,
     "source": ["online", "api"]
-  }, props.apiPrefix)
+  })
   setLoading(false)
   if (!result) return;
   const list = result.data?.list || []
   history.value = history.value.concat(list)
   pageInfo.total = result.data.total || 0
   if (!list || list.length === 0) {
-    newChat({...appConfig.value, apiPrefix: props.apiPrefix}, true)
+    newChat(appConfig, true)
   } else if (!activeChatId.value) {
     setActiveChatId(list[0].chatId)
   }
@@ -170,7 +161,7 @@ async function loadMore() {
   pageInfo.page++
   getChatList()
 }
-watch(() => props.appConfig.appId, (value) => {
+watch(() => appConfig.appId, (value) => {
   getChatList()
 }, { immediate: true })
 

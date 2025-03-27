@@ -75,26 +75,20 @@
 import { defineProps, defineEmits, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
-import { copyDomText } from "@/utils/config.ts";
 import { type ChatType } from "@/type/chat.ts";
 import SvgIcon from "@/components/SvgIcon/index.vue";
-import { getConfig } from "@/stores/config.ts";
 import { updateUserFeedback } from "@/api/api.ts";
-import { formatTime2shortText } from "@/utils/index.ts";
+import { formatTime2shortText, copyDomText } from "@/utils/index.ts";
+import { useAppConfig, useChat } from "@/stores/userChat.ts";
 
 
 const props = defineProps<{
-  appConfig: {
-    appId: string
-    appName: string
-    apiKey: string
-  }
   item: ChatType.ChatMessageType
-  activeChatId: string
-  apiPrefix: string
 }>()
 
-const appConfig = computed(() => props.appConfig)
+const { activeChatId } = useChat()
+
+const { appConfig } = useAppConfig()
 const emits = defineEmits(['updateFeedback'])
 
 function copyText() {
@@ -117,8 +111,8 @@ async function likeOrDislike(type: 'Y' | 'N') {
     // 取消踩时不填此参数
     userBadFeedback?: string
   } = {
-    appId: appConfig.value.appId,
-    chatId: props.activeChatId,
+    appId: appConfig.appId,
+    chatId: activeChatId.value,
     dataId: props.item.dataId,
     // // 取消点赞时不填此参数
     // userGoodFeedback: undefined,
@@ -133,7 +127,7 @@ async function likeOrDislike(type: 'Y' | 'N') {
     if (!feedback) return;
     params.userBadFeedback = feedback
   }
-  const result = await updateUserFeedback(params, props.apiPrefix)
+  const result = await updateUserFeedback(params)
   if (!result) return;
   emits('updateFeedback')
 }

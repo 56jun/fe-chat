@@ -1,5 +1,21 @@
 import axios from 'axios';
-import { getHeader, getConfig } from "@/stores/config.ts";
+
+import { useAppConfig } from "@/stores/userChat.ts";
+
+
+
+
+function getHeader() {
+  const { appConfig } = useAppConfig()
+  return {
+    Authorization: `Bearer ${appConfig.apiKey}`
+  }
+}
+
+export function getChatApi() {
+  const { appConfig } = useAppConfig()
+  return  appConfig.baseURL + '/api/v1/chat/completions';
+}
 
 // todo 上传文件
 export async function uploadFile(formData: FormData): Promise<{ data: { yswjmc: string, wjfwurl: string } } | false> {
@@ -21,9 +37,10 @@ export async function uploadFile(formData: FormData): Promise<{ data: { yswjmc: 
   })
 }
 
-export async function getHistories(data: Object, baseURL = '') {
+export async function getHistories(data: Object) {
   return new Promise((resolve) => {
-    axios.post(baseURL + '/api/core/chat/getHistories', data, { headers: getHeader() }).then((response) => {
+    const { appConfig } = useAppConfig()
+    axios.post(appConfig.baseURL + '/api/core/chat/getHistories', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
       } else {
@@ -42,9 +59,10 @@ export async function getPaginationRecords(data: {
   "pageSize": number,
   "appId": string,
   "chatId": string,
-}, baseURL = '') {
+}) {
   return new Promise((resolve) => {
-    axios.post(baseURL + '/api/core/chat/getPaginationRecords', data, { headers: getHeader() }).then((response) => {
+    const { appConfig } = useAppConfig()
+    axios.post(appConfig.baseURL + '/api/core/chat/getPaginationRecords', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
       } else {
@@ -58,9 +76,10 @@ export async function getPaginationRecords(data: {
 }
 
 // 修改对话标题
-export async function updateHistory(data: Object, baseURL = '') {
+export async function updateHistory(data: Object) {
   return new Promise((resolve) => {
-    axios.post(baseURL + '/api/core/chat/getHistories', data, { headers: getHeader() }).then((response) => {
+    const { appConfig } = useAppConfig()
+    axios.post(appConfig.baseURL + '/api/core/chat/getHistories', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
       } else {
@@ -82,9 +101,10 @@ export async function updateUserFeedback(data: {
   userGoodFeedback?: string
   // 取消踩时不填此参数
   userBadFeedback?: string
-}, baseURL = '') {
+}) {
   return new Promise((resolve) => {
-    axios.post(baseURL + '/api/core/chat/feedback/updateUserFeedback', data, { headers: getHeader() }).then((response) => {
+    const { appConfig } = useAppConfig()
+    axios.post(appConfig.baseURL + '/api/core/chat/feedback/updateUserFeedback', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
       } else {
@@ -98,10 +118,10 @@ export async function updateUserFeedback(data: {
 }
 
 // 删除当前对话
-export async function delHistory(chatId: string, baseURL = '') {
+export async function delHistory(chatId: string) {
   return new Promise((resolve) => {
-    const appConfig = getConfig()
-    axios.delete(baseURL + `/api/core/chat/delHistory?appId=${appConfig.appId}&chatId=${chatId}`, { headers: getHeader() }).then((response) => {
+    const { appConfig } = useAppConfig()
+    axios.delete(appConfig.baseURL + `/api/core/chat/delHistory?appId=${appConfig.appId}&chatId=${chatId}`, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
       } else {
@@ -115,10 +135,10 @@ export async function delHistory(chatId: string, baseURL = '') {
 }
 
 // 清空历史记录
-export async function clearHistories(baseURL = '') {
+export async function clearHistories() {
   return new Promise((resolve) => {
-    const appConfig = getConfig()
-    axios.delete(baseURL + `/api/core/chat/clearHistories?appId=${appConfig.appId}`, { headers: getHeader() }).then((response) => {
+    const { appConfig } = useAppConfig()
+    axios.delete(appConfig.baseURL + `/api/core/chat/clearHistories?appId=${appConfig.appId}`, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
       } else {

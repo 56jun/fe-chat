@@ -1,4 +1,4 @@
-import { ref, onUnmounted } from 'vue'
+import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { clearHistories, getPaginationRecords } from "@/api/api.ts";
 import { type ChatType } from "@/type/chat.ts"
@@ -24,9 +24,9 @@ export const useChat = () => {
     loading.value = status
   }
 
-  async function clearChatHistory(apiPrefix = '') {
+  async function clearChatHistory() {
     setLoading(true)
-    const res = await clearHistories(apiPrefix)
+    const res = await clearHistories()
     setLoading(false)
     if (!res) return;
     ElMessage.success('操作成功')
@@ -54,7 +54,7 @@ export const useChat = () => {
     chat.title = text
   }
 
-  async function newChat(appConfig: { appId: string; appName: string; apiKey: string; apiPrefix: string }, force: boolean = false) {
+  async function newChat(appConfig: { appId: string; appName: string; apiKey: string; baseURL: string }, force: boolean = false) {
     if (!force) {
       setLoading(true)
       const result: any = await getPaginationRecords({
@@ -62,7 +62,7 @@ export const useChat = () => {
         pageSize: 20,
         appId: appConfig.appId,
         chatId: activeChatId.value,
-      }, appConfig.apiPrefix)
+      })
       setLoading(false)
       if (result.data.total === 0) {
         return;
@@ -93,6 +93,35 @@ export const useChat = () => {
     resetChatCache,
     updateNewQuestion,
     newChat,
+  }
+}
+
+export type AppConfigType = {
+  appName: string;
+  appId: string;
+  apiKey: string;
+  customUid: string;
+  baseURL: string;
+}
+
+const appConfig = reactive<AppConfigType>({
+  appName: '',
+  appId: '',
+  apiKey: '',
+  customUid: '',
+  baseURL: '',
+})
+
+export const useAppConfig = () => {
+
+  function setAppConfig(config: AppConfigType) {
+    if (!config) return;
+    Object.assign(appConfig, config)
+  }
+
+  return {
+    setAppConfig,
+    appConfig
   }
 }
 

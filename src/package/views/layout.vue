@@ -1,17 +1,11 @@
 <template>
 <div class="layout__app-chat">
   <div class="chat-wrapper">
-    <ChatList :app-config="appConfig"
-              :apiPrefix="apiPrefix"
-              :custom-uid="customUid"
-    />
+    <ChatList />
     <div v-if="activeChatId" class="chat-detail">
-      <Chat :app-config="appConfig"
-            :apiPrefix="apiPrefix"
-            :show-back="showBack"
+      <Chat :show-back="showBack"
             @genChatId="genChatId"
             @back="onBack"
-            :custom-uid="customUid"
       />
     </div>
   </div>
@@ -21,32 +15,19 @@
 <script setup lang="ts">
 import ChatList from "@/package/views/chat-list.vue";
 import Chat from '@/package/views/chat.vue'
-import { useChat } from "@/stores/userChat.ts";
-import { computed, defineProps, defineEmits, onMounted, onUnmounted } from "vue";
-
-type AppConfig = {
-  appId: string
-  appName: string
-  apiKey: string
-}
+import { useChat, useAppConfig, type AppConfigType } from "@/stores/userChat.ts";
+import { computed, defineProps, defineEmits, onMounted, onUnmounted, watch } from "vue";
 
 const props = defineProps({
   appConfig: {
     required: true,
-    default: (): AppConfig => ({
+    default: (): AppConfigType => ({
       appName: '',
       appId: '',
-      apiKey: ''
+      apiKey: '',
+      baseURL: '',
+      customUid: '',
     })
-  },
-  apiPrefix: {
-    required: true,
-    type: String,
-    default: '/deepseek'
-  },
-  customUid: {
-    required: true,
-    type: String,
   },
   showBack: {
     type: Boolean,
@@ -57,7 +38,12 @@ const props = defineProps({
     default: () => () => ''
   },
 })
-const appConfig = computed(() => props.appConfig)
+
+const { setAppConfig, appConfig } = useAppConfig()
+
+watch(() => props.appConfig, (config) => {
+  setAppConfig(config)
+}, { immediate: true })
 
 const emits = defineEmits(['back'])
 
@@ -66,8 +52,6 @@ function onBack() {
 }
 
 const { activeChatId } = useChat()
-
-function emptyFn() {}
 
 </script>
 

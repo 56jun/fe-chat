@@ -18,7 +18,7 @@
         </div>
       </div>
       <div class="chat-header__app-name">{{ appConfig.appName || '' }}</div>
-      <el-icon class="chat-header__new-chat" @click="newChat({...appConfig, apiPrefix})" size="22"><CirclePlus /></el-icon>
+      <el-icon class="chat-header__new-chat" @click="newChat(appConfig)" size="22"><CirclePlus /></el-icon>
     </div>
     <div ref="answerWindowRef" class="answer-box">
       <div class="answer-content">
@@ -44,9 +44,6 @@
           </div>
           <!--          回答-->
           <ChatAnswer v-if="item.role === 'assistant'"
-                      :activeChatId="activeChatId"
-                      :api-prefix="apiPrefix"
-                      :appConfig="appConfig"
                       :item="item"
                       @updateFeedback="getMessage(activeChatId)"
           />
@@ -109,10 +106,7 @@
       direction="ltr"
       size="70%"
     >
-      <ChatList :api-prefix="apiPrefix"
-                :custom-uid="customUid"
-                :app-config="appConfig"
-                @select="() => drawer = false"/>
+      <ChatList @select="() => drawer = false"/>
     </el-drawer>
   </div>
 </template>
@@ -137,39 +131,30 @@ import FileIcon from "./file-icon.vue";
 import { marked } from 'marked'
 import ChatAnswer from "./components/chat-answer.vue";
 
-import { copyDomText } from "@/utils/config";
-import { getPaginationRecords, uploadFile } from "@/api/api.ts";
+import { copyDomText } from "@/utils/index.ts";
+import { getChatApi, getPaginationRecords, uploadFile } from "@/api/api.ts";
 
 import sendImg from "@/assets/send.png";
 import Fujian from "@/assets/fujian.png";
 import stopSvg from "@/assets/icons/svg/stop.svg";
 import CloseTag from "@/assets/close-tag.png";
 
-import { useChat } from "@/stores/userChat.ts";
+import { useAppConfig, useChat } from "@/stores/userChat.ts";
 import { streamFetch } from "@/utils/chat-fetch.ts";
 import { type ChatType, SseResponseEventEnum } from "@/type/chat.ts";
-// import useChatStore from '@/store/modules/chat.ts'
 
 
 const props = defineProps<{
-  appConfig: {
-    appId: string
-    appName: string
-    apiKey: string
-  }
-  apiPrefix: string
-  customUid: string
   showBack: boolean
 }>()
-const appConfig = computed(() => props.appConfig)
+
+const { appConfig } = useAppConfig()
+
 const showBack = computed(() => props.showBack)
 
 const emits = defineEmits(["back"])
 
 const { activeChatId, message, history, updateNewQuestion, newChat } = useChat()
-
-// const store = useChatStore()
-// const appConfig = computed(() => store.getAppConfig)
 
 const needUpdateParentChatListTitle = ref(false)
 
@@ -217,7 +202,6 @@ async function sendMessageChat() {
   if (loading.value || !form.question || ['preThinking', 'outputting'].includes(progressGlobal.value)) {
     return false;
   }
-  const url = props.apiPrefix + '/api/v1/chat/completions';
 
   let messageItem: ChatType.ChatMessageType = {
     role: 'user',
@@ -240,7 +224,7 @@ async function sendMessageChat() {
   message.value.push(messageItem);
   const params = {
     chatId: activeChatId.value,
-    customUid: props.customUid,// 自定义的用户 ID。在历史记录中，该条记录的使用者会显示为 xxxxxx
+    customUid: appConfig.customUid,// 自定义的用户 ID。在历史记录中，该条记录的使用者会显示为 xxxxxx
     // 替换为实际的请求参数
     // prompt: this.form.question,
     messages: [{ ...messageItem }],
@@ -249,8 +233,8 @@ async function sendMessageChat() {
     stream: true,
     // 是否返回中间值（模块状态，响应的完整结果等），stream 模式下会通过 event 进行区分，非 stream 模式结果保存在 responseData 中。
     detail: true,
-    appId: appConfig.value?.appId,
-    appName: appConfig.value?.appName,
+    appId: appConfig.appId,
+    appName: appConfig.appName,
   };
   try {
     message.value.push({
@@ -270,11 +254,11 @@ async function sendMessageChat() {
     abortController.value = new AbortController();
 
     streamFetch({
-      url,
+      url: getChatApi(),
       data: params,
       onMessage,
       abortCtrl: abortController.value,
-      apiKey: appConfig.value.apiKey,
+      apiKey: appConfig.apiKey,
     }).catch((err) => {
       console.error(err)
       loading.value = false;
@@ -419,9 +403,9 @@ async function getMessage(chatId: string) {
   const result: any = await getPaginationRecords({
     offset: 0,
     pageSize: 20,
-    appId: appConfig.value.appId,
+    appId: appConfig.appId,
     chatId,
-  }, props.apiPrefix)
+  })
   requestLoading.value = false
   message.value = (result?.data?.list || []).map((item: ChatType.ChatMessageType) => {
     if (item.obj === 'AI') {
