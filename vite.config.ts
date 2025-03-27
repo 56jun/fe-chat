@@ -36,8 +36,9 @@ export default defineConfig(({ mode, command }) => {
         [env.VITE_BASE_URL]: {
           // target:'http://2964pu8867.vicp.fun/',
           // target:'https://zhgx.aihfgx.com/ai',
+          target: 'http://218.22.24.55:10000/ai',
           // target:'http://10.161.3.174:3000/',
-          target:'http://localhost:3000/',
+          // target:'http://localhost:3000/',
           changeOrigin: true,
           rewrite(path) {
             console.log('path',path.replace(/\/deepseek/g, ''))

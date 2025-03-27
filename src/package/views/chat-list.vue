@@ -11,6 +11,7 @@
                  round>新对话
       </el-button>
       <el-popconfirm @confirm="clearChatList"
+                     v-if="pageConfig['delete.patch']"
                      width="220"
                      title="确认删除所有聊天记录？"
                      confirm-button-text="确认"
@@ -44,6 +45,7 @@
           }}
         </div>
         <el-button @click.stop="removeChatItem(item)"
+                   v-if="pageConfig['delete.single']"
                    :icon="Delete"
                    size="small"
                    class="chat-list__chat-history-list__config__button"
@@ -64,7 +66,7 @@ import { useChat, useAppConfig, formatTime2shortText } from "@/stores/userChat";
 import { delHistory, getHistories, getPaginationRecords } from "@/api/api";
 import type { ChatType } from "@/type/chat.ts";
 
-const { appConfig } = useAppConfig()
+const { appConfig, pageConfig } = useAppConfig()
 
 const emits = defineEmits(["select"]);
 

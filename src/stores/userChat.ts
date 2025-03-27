@@ -104,6 +104,11 @@ export type AppConfigType = {
   baseURL: string;
 }
 
+export type PageConfigType = {
+  ['delete.patch']: boolean
+  ['delete.single']: boolean
+}
+
 const appConfig = reactive<AppConfigType>({
   appName: '',
   appId: '',
@@ -112,6 +117,13 @@ const appConfig = reactive<AppConfigType>({
   baseURL: '',
 })
 
+export const PAGE_CONFIG_DEFAULT = {
+  ['delete.patch']: true,
+  ['delete.single']: true,
+}
+
+const pageConfig = reactive(PAGE_CONFIG_DEFAULT)
+
 export const useAppConfig = () => {
 
   function setAppConfig(config: AppConfigType) {
@@ -119,9 +131,16 @@ export const useAppConfig = () => {
     Object.assign(appConfig, config)
   }
 
+  function setPageConfig(config: PageConfigType) {
+    if (!config) return;
+    Object.assign(pageConfig, config)
+  }
+
   return {
     setAppConfig,
-    appConfig
+    setPageConfig,
+    appConfig,
+    pageConfig,
   }
 }
 

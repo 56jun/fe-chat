@@ -15,8 +15,14 @@
 <script setup lang="ts">
 import ChatList from "@/package/views/chat-list.vue";
 import Chat from '@/package/views/chat.vue'
-import { useChat, useAppConfig, type AppConfigType } from "@/stores/userChat.ts";
-import { computed, defineProps, defineEmits, onMounted, onUnmounted, watch } from "vue";
+import {
+  useChat,
+  useAppConfig,
+  PAGE_CONFIG_DEFAULT,
+  type AppConfigType,
+  type PageConfigType
+} from "@/stores/userChat.ts";
+import { defineProps, defineEmits, watch } from "vue";
 
 const props = defineProps({
   appConfig: {
@@ -29,6 +35,9 @@ const props = defineProps({
       customUid: '',
     })
   },
+  pageConfig: {
+    default: (): PageConfigType => PAGE_CONFIG_DEFAULT
+  },
   showBack: {
     type: Boolean,
     default: true
@@ -39,10 +48,14 @@ const props = defineProps({
   },
 })
 
-const { setAppConfig, appConfig } = useAppConfig()
+const { setAppConfig, setPageConfig } = useAppConfig()
 
 watch(() => props.appConfig, (config) => {
   setAppConfig(config)
+}, { immediate: true })
+
+watch(() => props.pageConfig, (config) => {
+  setPageConfig(config)
 }, { immediate: true })
 
 const emits = defineEmits(['back'])
