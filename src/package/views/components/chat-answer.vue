@@ -85,7 +85,7 @@ import { type ChatType } from "@/type/chat.ts";
 import SvgIcon from "@/components/SvgIcon/index.vue";
 import { updateUserFeedback } from "@/api/api.ts";
 import { formatTime2shortText, copyDomText } from "@/utils/index.ts";
-import { useAppConfig, useChat } from "@/stores/userChat.ts";
+import { useChatConfig, useChat } from "@/stores/userChat.ts";
 
 
 const props = defineProps<{
@@ -94,7 +94,7 @@ const props = defineProps<{
 
 const { activeChatId } = useChat()
 
-const { appConfig } = useAppConfig()
+const { appConfig } = useChatConfig()
 const emits = defineEmits(['updateFeedback'])
 
 function copyText() {
@@ -193,7 +193,7 @@ const open = (): Promise<string | false> => {
   .answer-item {
     width: 100%;
     min-height: 20px;
-    padding: 0 12px;
+    padding: 12px 12px 0;
     margin-top: 10px;
     word-break: break-all;
     position: relative;
@@ -205,6 +205,9 @@ const open = (): Promise<string | false> => {
     .markdown-body {
       * {
         word-break: break-word;
+      }
+      :deep(p:nth-child(1)) {
+        margin-top: 0;
       }
     }
     .answering > :nth-last-child(1) {
@@ -272,8 +275,7 @@ const open = (): Promise<string | false> => {
   }
   .timer {
     margin-left: 10px;
-    opacity: 0;
-    transition: all .3s;
+    display: none;
   }
   .bottom-copy-btn {
     position: absolute;
@@ -297,12 +299,29 @@ const open = (): Promise<string | false> => {
   }
 }
 @keyframes Markdown_blink__bDVIw {
-  0%, to {
-    opacity: 0
-  }
+    0%, to {
+      opacity: 0
+    }
 
-  50% {
-    opacity: 1
+    50% {
+      opacity: 1
+    }
+  }
+</style>
+
+<style scoped lang="less">
+@media (min-width: 961px) {
+  .answer-content__assistant {
+    &:hover {
+      .answer-item {
+        .timer {
+          display: initial;
+        }
+        .bottom-copy-btn {
+          display: initial;
+        }
+      }
+    }
   }
 }
 </style>

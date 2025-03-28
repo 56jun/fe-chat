@@ -110,7 +110,7 @@ export type AppConfigType = {
 export const PAGE_CONFIG_DEFAULT = {
   ['delete.patch']: true,// 批量删除
   ['delete.single']: true,// 删除单条
-  ['upload.file']: true,// 上传附件按钮
+  ['upload.file']: false,// 上传附件按钮
 }
 
 export type PageConfigType = {
@@ -128,7 +128,7 @@ const appConfig = reactive<AppConfigType>({
 
 const pageConfig = reactive(PAGE_CONFIG_DEFAULT)
 
-export const useAppConfig = () => {
+export const useChatConfig = () => {
 
   // 设置应用配置
   function setAppConfig(config: AppConfigType) {

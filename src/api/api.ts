@@ -1,19 +1,19 @@
 import axios from 'axios';
 
-import { useAppConfig } from "@/stores/userChat.ts";
+import { useChatConfig } from "@/stores/userChat.ts";
 
 
 
 
 function getHeader() {
-  const { appConfig } = useAppConfig()
+  const { appConfig } = useChatConfig()
   return {
     Authorization: `Bearer ${appConfig.apiKey}`
   }
 }
 
 export function getChatApi() {
-  const { appConfig } = useAppConfig()
+  const { appConfig } = useChatConfig()
   return  appConfig.baseURL + '/api/v1/chat/completions';
 }
 
@@ -39,7 +39,7 @@ export async function uploadFile(formData: FormData): Promise<{ data: { yswjmc: 
 
 export async function getHistories(data: Object) {
   return new Promise((resolve) => {
-    const { appConfig } = useAppConfig()
+    const { appConfig } = useChatConfig()
     axios.post(appConfig.baseURL + '/api/core/chat/getHistories', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
@@ -61,7 +61,7 @@ export async function getPaginationRecords(data: {
   "chatId": string,
 }) {
   return new Promise((resolve) => {
-    const { appConfig } = useAppConfig()
+    const { appConfig } = useChatConfig()
     axios.post(appConfig.baseURL + '/api/core/chat/getPaginationRecords', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
@@ -78,7 +78,7 @@ export async function getPaginationRecords(data: {
 // 修改对话标题
 export async function updateHistory(data: Object) {
   return new Promise((resolve) => {
-    const { appConfig } = useAppConfig()
+    const { appConfig } = useChatConfig()
     axios.post(appConfig.baseURL + '/api/core/chat/getHistories', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
@@ -103,7 +103,7 @@ export async function updateUserFeedback(data: {
   userBadFeedback?: string
 }) {
   return new Promise((resolve) => {
-    const { appConfig } = useAppConfig()
+    const { appConfig } = useChatConfig()
     axios.post(appConfig.baseURL + '/api/core/chat/feedback/updateUserFeedback', data, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
@@ -120,7 +120,7 @@ export async function updateUserFeedback(data: {
 // 删除当前对话
 export async function delHistory(chatId: string) {
   return new Promise((resolve) => {
-    const { appConfig } = useAppConfig()
+    const { appConfig } = useChatConfig()
     axios.delete(appConfig.baseURL + `/api/core/chat/delHistory?appId=${appConfig.appId}&chatId=${chatId}`, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)
@@ -137,7 +137,7 @@ export async function delHistory(chatId: string) {
 // 清空历史记录
 export async function clearHistories() {
   return new Promise((resolve) => {
-    const { appConfig } = useAppConfig()
+    const { appConfig } = useChatConfig()
     axios.delete(appConfig.baseURL + `/api/core/chat/clearHistories?appId=${appConfig.appId}`, { headers: getHeader() }).then((response) => {
       if (response.data.code === 200) {
         resolve(response.data)

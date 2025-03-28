@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import Layout from "@/package/views/layout.vue";
 import { ref } from "vue";
-import { PAGE_CONFIG_DEFAULT } from "@/stores/userChat.ts";
+import { PAGE_CONFIG_DEFAULT } from "@/package/index.ts";
 
 const appConfig = {
   apiKey: 'fastgpt-zrLYExc7wjg3QWTntFN9qc669IvYgLBDN0w4p89PzD408PXz6JpGYN',

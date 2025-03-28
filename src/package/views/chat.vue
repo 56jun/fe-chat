@@ -141,7 +141,7 @@ import Fujian from "@/assets/fujian.png";
 import stopSvg from "@/assets/icons/svg/stop.svg";
 import CloseTag from "@/assets/close-tag.png";
 
-import { useAppConfig, useChat } from "@/stores/userChat.ts";
+import { useChatConfig, useChat } from "@/stores/userChat.ts";
 import { streamFetch } from "@/utils/chat-fetch.ts";
 import { type ChatType, SseResponseEventEnum } from "@/type/chat.ts";
 
@@ -150,7 +150,7 @@ const props = defineProps<{
   showBack: boolean
 }>()
 
-const { appConfig, hasRole } = useAppConfig()
+const { appConfig, hasRole } = useChatConfig()
 
 const showBack = computed(() => props.showBack)
 
@@ -510,11 +510,11 @@ onUnmounted(() => {
       padding: 5px 10px;
       border-radius: 4px;
       background-color: #F0F4FF;
+      font-size: calc(var(--font-base-size) + 0px);
       color: #3370FF;
     }
     &__chat-history {
       display: none;
-      font-size: 22px;
       cursor: pointer;
     }
     &__app-name {
@@ -525,7 +525,7 @@ onUnmounted(() => {
       color: #0D0E15;
       text-align: center;
       font-weight: bold;
-      font-size: 16px;
+      font-size: calc(var(--font-base-size) + 2px);
       display: none;
     }
     &__chat-title {
@@ -800,6 +800,9 @@ onUnmounted(() => {
 }
 </style>
 <style lang="less" scoped>
+@media (min-width: 961px) {}
+</style>
+<style lang="less" scoped>
 @media (max-width: 960px) {
   .deepseek {
     .chat-header {
@@ -830,7 +833,7 @@ onUnmounted(() => {
           box-shadow: none;
           border-color: transparent;
           padding: 10px 45px;
-
+          font-size: var(--font-base-size);
         }
       }
       .upload-button {

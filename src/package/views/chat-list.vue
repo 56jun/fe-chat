@@ -41,16 +41,17 @@
           <ChatDotRound />
         </el-icon>
         <div class="chat-list__chat-history-list__name show-lines-1">{{ item.title }}</div>
-        <div class="chat-list__chat-history-list__time">{{
-            formatTime2shortText(item.updateTime)
-                                                        }}
-        </div>
+        <span class="chat-list__chat-history-list__time">
+          {{formatTime2shortText(item.updateTime)}}
+        </span>
         <el-button @click.stop="removeChatItem(item)"
                    v-if="hasRole('delete.single')"
                    :icon="Delete"
                    size="small"
+                   type="danger"
                    class="chat-list__chat-history-list__config__button"
                    style="padding: 0 4px; height: 20px;"
+                   plain
         ></el-button>
       </li>
     </ul>
@@ -63,11 +64,11 @@ import { ElMessage } from 'element-plus'
 import { useScroll } from '@vueuse/core'
 // 导入垃圾桶图标
 import { ChatDotRound, Delete } from "@element-plus/icons-vue";
-import { useChat, useAppConfig, formatTime2shortText } from "@/stores/userChat";
+import { useChat, useChatConfig, formatTime2shortText } from "@/stores/userChat";
 import { delHistory, getHistories, getPaginationRecords } from "@/api/api";
 import type { ChatType } from "@/type/chat.ts";
 
-const { appConfig, hasRole } = useAppConfig()
+const { appConfig, hasRole } = useChatConfig()
 
 const emits = defineEmits(["select"]);
 
@@ -172,7 +173,7 @@ watch(() => appConfig.appId, (value) => {
 // onMounted(getChatList)
 </script>
 
-<style scoped lang="less">
+<style lang="less" scoped>
 .chat-list {
   width: 300px;
   height: 100%;
@@ -235,11 +236,6 @@ watch(() => appConfig.appId, (value) => {
       & + li {
         margin-top: 8px;
       }
-      &:hover {
-        .chat-list__chat-history-list__config__button {
-          display: initial;
-        }
-      }
       &.active {
         color: #3370FF;
         background-color: #F0F4FF;
@@ -252,14 +248,9 @@ watch(() => appConfig.appId, (value) => {
     }
     &__time {
       width: 60px;
-      text-align: right;
       flex-shrink: 0;
       flex-grow: 0;
       transition: all .3s;
-    }
-    &__config__button {
-      transition: all .3s;
-      display: none;
     }
     &__config {
       list-style: none;
@@ -273,6 +264,27 @@ watch(() => appConfig.appId, (value) => {
   }
 }
 </style>
+<!--大于960px-->
+<style lang="less" scoped>
+@media (min-width: 961px) {
+  .chat-list {
+    .chat-list__chat-history-list {
+      &__config__button {
+        display: none;
+      }
+      li:hover {
+        .chat-list__chat-history-list__time {
+          display: none;
+        }
+        .chat-list__chat-history-list__config__button {
+          display: initial;
+        }
+      }
+    }
+  }
+}
+</style>
+<!--小于960px-->
 <style lang="less" scoped>
 @media (max-width: 960px) {
   .chat-list {
@@ -291,13 +303,30 @@ watch(() => appConfig.appId, (value) => {
       height: auto;
       li {
         padding: 6px;
+        display: block;
+        position: relative;
+        line-height: 1.2;
         .el-icon {
           display: none;
         }
+        & + li {
+          margin-top: 2px;
+        }
+      }
+      &__name {
+        padding-left: 0;
       }
       &__time {
-        color: #919191;
+        color: #aeaeae;
         font-size: 14px;
+      }
+      &__config__button {
+        position: absolute;
+        border-color: transparent;
+        font-size: 16px;
+        background-color: transparent;
+        opacity: .7;
+        right: 6px;
       }
     }
   }

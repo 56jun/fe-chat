@@ -6,7 +6,7 @@ import ChatList from '@/package/views/chat-list.vue';
 
 import pinia from '@/store/index.ts'  //新增代码
 import { streamFetch } from '@/utils/chat-fetch.ts'
-import { useChat, formatTime2shortText } from '@/stores/userChat.ts'
+export * from '@/stores/userChat.ts'
 
 function install(app: App) {
   app.component('Chat', Chat);
@@ -21,6 +21,4 @@ export {
   AppList,
   ChatList,
   streamFetch,
-  useChat,
-  formatTime2shortText
 };

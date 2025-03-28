@@ -17,7 +17,7 @@ import ChatList from "@/package/views/chat-list.vue";
 import Chat from '@/package/views/chat.vue'
 import {
   useChat,
-  useAppConfig,
+  useChatConfig,
   PAGE_CONFIG_DEFAULT,
   type AppConfigType,
   type PageConfigType
@@ -48,7 +48,7 @@ const props = defineProps({
   },
 })
 
-const { setAppConfig, setPageConfig } = useAppConfig()
+const { setAppConfig, setPageConfig } = useChatConfig()
 
 watch(() => props.appConfig, (config) => {
   setAppConfig(config)
@@ -75,6 +75,7 @@ const { activeChatId } = useChat()
   padding: 16px;
   flex-grow: 1;
   --font-base-size: 14px;
+  font-size: var(--font-base-size);
 }
 .chat-wrapper {
   width: 100%;
@@ -90,7 +91,8 @@ const { activeChatId } = useChat()
 }
 @media (max-width: 960px) {
   .layout__app-chat {
-    --font-base-size: 16px;
+    --font-base-size: 18px;
+    font-size: var(--font-base-size);
     width: 100%;
     padding: 0;
     .chat-list {
