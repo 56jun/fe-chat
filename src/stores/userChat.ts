@@ -163,6 +163,7 @@ export const useChatConfig = () => {
     setPageConfig,
     appConfig,
     hasRole,
+    reset
   }
 }
 

@@ -91,7 +91,7 @@ const { activeChatId } = useChat()
 }
 @media (max-width: 960px) {
   .layout__app-chat {
-    --font-base-size: 18px;
+    --font-base-size: 16px;
     font-size: var(--font-base-size);
     width: 100%;
     padding: 0;
