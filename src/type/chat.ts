@@ -10,16 +10,16 @@ export namespace ChatType {
   }
 
   export type ResponseAnswerItemType = {
-    type: 'text'
-    text: {
+    type: AnswerTypeEnum.text
+    [AnswerTypeEnum.text]: {
       content: string,
       html: string
     }
   } | {
-    type: 'reasoning'
+    type: AnswerTypeEnum.reasoning
     // 是否展示思考过程
     hide: boolean
-    reasoning: {
+    [AnswerTypeEnum.reasoning]: {
       content: string,
       html: string
     }
@@ -75,4 +75,9 @@ export enum SseResponseEventEnum {
   updateVariables = 'updateVariables',
   error = 'error',
   done = 'done'
+}
+
+export enum AnswerTypeEnum {
+  text = 'text',
+  reasoning = 'reasoning'
 }

@@ -14,7 +14,7 @@
         <li><el-icon @click="copyText" title="复制"><CopyDocument /></el-icon></li>
         <!--    点赞 -->
         <li @click="likeOrDislike('Y')"
-            v-if="!item.userBadFeedback"
+            v-if="!item.userBadFeedback && item.type !== 'welcome'"
             class="success"
             :class="{ active: item.userGoodFeedback }"
         >
@@ -22,18 +22,18 @@
         </li>
         <!--    点踩    -->
         <li @click="likeOrDislike('N')"
-            v-if="!item.userGoodFeedback"
+            v-if="!item.userGoodFeedback && item.type !== 'welcome'"
             class="danger"
             :class="{ active: item.userBadFeedback }"
         >
           <svg-icon icon-class="like" font-size="18" style="transform: rotateX(180deg)"></svg-icon>
         </li>
       </ul>
-      <div class="timer">{{ formatTime2shortText(item.time) }}</div>
+      <div v-if="item.type !== 'welcome'" class="timer">{{ formatTime2shortText(item.time) }}</div>
     </div>
     <div v-if="item.progress !== 'preThinking'" class="answer-item">
       <div v-for="(responseItem, responseIndex) in item.value" :key="`${responseIndex}`">
-        <div v-if="responseItem.type === 'reasoning'"
+        <div v-if="responseItem.type === AnswerTypeEnum.reasoning && responseItem.reasoning.html"
              class="answer-item__reasoning"
         >
           <div class="answer-item__reasoning__title"
@@ -53,7 +53,7 @@
                v-html="responseItem.reasoning?.html"
           ></div>
         </div>
-        <div v-else-if="responseItem.type === 'text'"
+        <div v-else-if="responseItem.type === AnswerTypeEnum.text && responseItem.text?.html"
              v-html="responseItem.text?.html"
              class="markdown-body select-text"
              :class="{ answering: responseIndex === (item.value.length - 1) && item.progress !== 'done' }"
@@ -81,7 +81,7 @@
 import { defineProps, defineEmits, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
-import { type ChatType } from "@/type/chat.ts";
+import { type ChatType, AnswerTypeEnum } from "@/type/chat.ts";
 import SvgIcon from "@/components/SvgIcon/index.vue";
 import { updateUserFeedback } from "@/api/api.ts";
 import { formatTime2shortText, copyDomText } from "@/utils/index.ts";
@@ -99,7 +99,7 @@ const emits = defineEmits(['updateFeedback'])
 
 function copyText() {
   const text = props.item.value?.map((x: ChatType.ResponseAnswerItemType) => {
-    if (x.type !== 'text') return '';
+    if (x.type !== AnswerTypeEnum.text) return '';
     return x.text.content;
   })
   if (copyDomText(text.join(" "))) {
@@ -314,12 +314,12 @@ const open = (): Promise<string | false> => {
   .answer-content__assistant {
     &:hover {
       .answer-item {
-        .timer {
-          display: initial;
-        }
-        .bottom-copy-btn {
-          display: initial;
-        }
+      }
+      .timer {
+        display: initial;
+      }
+      .bottom-copy-btn {
+        display: initial;
       }
     }
   }

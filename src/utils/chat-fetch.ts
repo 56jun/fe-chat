@@ -1,6 +1,6 @@
 import moment from 'moment';
 // refer to https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web
-import { EventStreamContentType, fetchEventSource } from '@fortaine/fetch-event-source';
+import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source'
 import { type ChatType, SseResponseEventEnum } from "@/type/chat";
 
 const formatTime2YMDHMW = (): string => {

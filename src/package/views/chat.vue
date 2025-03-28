@@ -3,16 +3,19 @@
     <div class="chat-header flex align-center">
       <div class="flex align-center chat-header__left">
         <el-icon v-if="showBack" size="22" @click="onBack" style="margin-right: 10px;"><ArrowLeftBold /></el-icon>
-        <span class="chat-header__chat-title">{{ (currentChatTitle || '新对话').slice(0, 20) }}</span>
+        <span class="chat-header__chat-title">{{
+            (currentChatTitle || '新对话').slice(0, 20)
+                                              }}</span>
         <img @click="viewDrawer"
              class="chat-header__chat-history"
              src="@/assets/app-config.webp"
              height="20"
         >
         <div class="flex align-center chat-header__record"
-             style="margin-left: 10px;line-height: 0;flex-shrink: 0;" type="primary">
+             style="margin-left: 10px;line-height: 0;flex-shrink: 0;" type="primary"
+        >
           <el-icon>
-            <Clock/>
+            <Clock />
           </el-icon>
           <span>&nbsp;{{ message.length }}条记录</span>
         </div>
@@ -29,11 +32,13 @@
               <template v-for="itemChat in item.content">
                 <div v-if="itemChat.type === 'file_url'" class="question-item__file">
                   <FileIcon :surffix="getSuffix(itemChat.name)"
-                            class="question-item__file--icon"></FileIcon>
+                            class="question-item__file--icon"
+                  ></FileIcon>
                   <div class="question-item__file--name u-line-1">{{ itemChat.name }}</div>
                 </div>
                 <div v-if="itemChat.type === 'text'" @click="copyText(itemChat.text)"
-                     class="question-item__text select-text">{{ itemChat.text }}
+                     class="question-item__text select-text"
+                >{{ itemChat.text }}
                 </div>
               </template>
             </div>
@@ -56,7 +61,8 @@
           <FileIcon :surffix="getSuffix(file.name)" class="input-area__file__icon"></FileIcon>
           <div class="input-area__file__name">{{ file.name }}</div>
           <img @click="deleteFile(index)" :src="CloseTag" class="input-area__file__close"
-               alt="关闭">
+               alt="关闭"
+          >
         </div>
       </div>
       <div class="input-area__input-box">
@@ -97,9 +103,11 @@
         >
           <img v-show="progressGlobal !== 'done'" @click="stopResponse" class="send-button--stop"
                :src="stopSvg"
-               alt="">
+               alt=""
+          >
           <img v-show="progressGlobal === 'done'" @click="sendMessageChat" class="send-button--send"
-               :src="sendImg" alt="">
+               :src="sendImg" alt=""
+          >
         </div>
       </div>
     </div>
@@ -108,24 +116,22 @@
       direction="ltr"
       size="70%"
     >
-      <ChatList @select="() => drawer = false"/>
+      <ChatList @select="() => drawer = false" />
     </el-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
 import {
-  ref,
-  reactive,
+  computed,
+  defineEmits,
+  defineProps,
+  nextTick,
   onMounted,
   onUnmounted,
-  nextTick,
+  reactive,
+  ref,
   watch,
-  unref,
-  computed,
-  defineProps,
-  toRef,
-  defineEmits,
 } from "vue";
 import { ElInput, ElMessage, type UploadFile } from "element-plus";
 import ChatList from "@/package/views/chat-list.vue";
@@ -134,16 +140,16 @@ import { marked } from 'marked'
 import ChatAnswer from "./components/chat-answer.vue";
 
 import { copyDomText } from "@/utils/index.ts";
-import { getChatApi, getPaginationRecords, uploadFile } from "@/api/api.ts";
+import { getChatApi, getChatInitWelcome, getPaginationRecords, uploadFile } from "@/api/api";
 
 import sendImg from "@/assets/send.png";
 import Fujian from "@/assets/fujian.png";
 import stopSvg from "@/assets/icons/svg/stop.svg";
 import CloseTag from "@/assets/close-tag.png";
 
-import { useChatConfig, useChat } from "@/stores/userChat.ts";
+import { useChat, useChatConfig } from "@/stores/userChat.ts";
 import { streamFetch } from "@/utils/chat-fetch.ts";
-import { type ChatType, SseResponseEventEnum } from "@/type/chat.ts";
+import { AnswerTypeEnum, type ChatType, SseResponseEventEnum } from "@/type/chat";
 
 
 const props = defineProps<{
@@ -181,6 +187,7 @@ const isAutoScroll = ref(true);
 
 
 const drawer = ref<boolean>(false)
+
 function viewDrawer() {
   drawer.value = true
 }
@@ -286,16 +293,17 @@ function onMessage(msg: ChatType.ResponseQueueItemType) {
 
   if (['fastAnswer', 'answer'].includes(msg.event)) {
     if (msg.reasoningText) {
-      if (lastValidResponseType !== 'reasoning') {
+      if (lastValidResponseType !== AnswerTypeEnum.reasoning) {
+        removePreviousEmptyAnswer(AnswerTypeEnum.text)
         lastItem.value.push({
-          type: 'reasoning',
-          reasoning: {
+          type: AnswerTypeEnum.reasoning,
+          [AnswerTypeEnum.reasoning]: {
             content: '',
             html: ''
           },
         })
       }
-      lastValidResponseType = 'reasoning'
+      lastValidResponseType = AnswerTypeEnum.reasoning
 
       lastItem.responseText = 'AI 对话'
       lastItem.progress = 'outputting'
@@ -305,16 +313,17 @@ function onMessage(msg: ChatType.ResponseQueueItemType) {
       lastReasoning.reasoning.html = marked.parse(lastReasoning.reasoning.content)
 
     } else if (msg.text) {
-      if (lastValidResponseType !== 'text') {
+      if (lastValidResponseType !== AnswerTypeEnum.text) {
+        removePreviousEmptyAnswer(AnswerTypeEnum.reasoning)
         lastItem.value.push({
-          type: 'text',
+          type: AnswerTypeEnum.text,
           text: {
             content: '',
             html: ''
           }
         })
       }
-      lastValidResponseType = 'text'
+      lastValidResponseType = AnswerTypeEnum.text
 
       lastItem.responseText = 'AI 对话'
       lastItem.progress = 'outputting'
@@ -344,6 +353,23 @@ function onMessage(msg: ChatType.ResponseQueueItemType) {
     updateNewQuestion(activeChatId.value)
   }
   scrollToBottom()
+}
+
+// 切换回答项目前，清空上一条空的回答
+function removePreviousEmptyAnswer(type: AnswerTypeEnum) {
+  const lastItem: ChatType.ChatMessageType = message.value[message.value.length - 1]
+  // 如果上一条是 AI 的回答，且是空的，就删除
+  if (
+    lastItem.role === 'assistant'
+    && lastItem.value.length > 0
+    && lastItem.value[lastItem.value.length - 1].type === type
+  ) {
+    const lastItemValue = lastItem.value[lastItem.value.length - 1]
+    // @ts-ignore
+    if (!lastItemValue[type].html) {
+      lastItem.value.pop()
+    }
+  }
 }
 
 function stopResponse() {
@@ -415,7 +441,7 @@ async function getMessage(chatId: string) {
   requestLoading.value = false
   message.value = (result?.data?.list || []).map((item: ChatType.ChatMessageType) => {
     if (item.obj === 'AI') {
-      const reasoningContentIndex = item.value.findIndex((x: any) => x.type === 'reasoning')
+      const reasoningContentIndex = item.value.findIndex((x: any) => x.type === AnswerTypeEnum.reasoning)
       const resultItem: ChatType.ChatMessageType = {
         dataId: item.dataId,
         time: item.time,
@@ -424,11 +450,11 @@ async function getMessage(chatId: string) {
         role: 'assistant',
         progress: 'done',
         value: item.value.filter((x: ChatType.ResponseAnswerItemType) => {
-          return x.type === 'text' && x.text.content || x.type === 'reasoning' && x.reasoning.content
+          return x.type === AnswerTypeEnum.text && x.text.content || x.type === AnswerTypeEnum.reasoning && x.reasoning.content
         }).map((x: ChatType.ResponseAnswerItemType) => {
-          if (x.type === 'text') {
+          if (x.type === AnswerTypeEnum.text) {
             x.text.html = marked.parse(x.text.content) as string;
-          } else if (x.type === 'reasoning') {
+          } else if (x.type === AnswerTypeEnum.reasoning) {
             x.hide = true
             x.reasoning.html = marked.parse(x.reasoning.content) as string;
           }
@@ -457,6 +483,27 @@ async function getMessage(chatId: string) {
     }
   })
   needUpdateParentChatListTitle.value = message.value.length === 0
+  if (message.value.length === 0) {
+    const result: any = await getChatInitWelcome(chatId)
+    if (result) {
+      const welcomeText = result?.data?.app?.chatConfig?.welcomeText || ''
+      if (welcomeText) {
+        message.value.push({
+          role: 'assistant',
+          progress: 'done',
+          responseText: '',
+          type: 'welcome',
+          value: [{
+            type: 'text',
+            text: {
+              content: welcomeText,
+              html: marked.parse(welcomeText) as string,
+            }
+          }]
+        } as ChatType.ChatMessageType)
+      }
+    }
+  }
   scrollToBottom()
   // 自动聚焦
   nextTick(() => {
@@ -638,7 +685,6 @@ onUnmounted(() => {
       }
     }
   }
-
   .input-area {
     position: relative;
     margin: 5px auto 10px auto;
@@ -651,7 +697,6 @@ onUnmounted(() => {
       overflow-y: visible;
       overflow-x: auto;
       padding-top: 10px;
-
       .input-area__file {
         display: inline-flex;
         align-items: center;
@@ -661,20 +706,16 @@ onUnmounted(() => {
         border-radius: 8px;
         font-size: var(--font-base-size);
         border: 1px solid rgba(0, 0, 0, 0.12);
-
         & + .input-area__file {
           margin-left: 10px;
         }
-
         &__name {
           text-wrap: nowrap;
         }
-
         &__icon {
           height: 19px;
           margin-right: 5px;
         }
-
         &__close {
           width: 19px;
           position: absolute;
@@ -688,16 +729,13 @@ onUnmounted(() => {
         }
       }
     }
-
     &-top-tag {
       width: calc(100% - 10px);
       margin-top: 7px;
-
       &__group {
         display: flex;
         align-items: center;
         font-family: @fontFamily;
-
         &__item {
           display: flex;
           align-items: center;
@@ -708,28 +746,23 @@ onUnmounted(() => {
           color: #363638;
           font-size: var(--font-base-size);
           transition: all .3s;
-
           img {
             width: 15px;
             margin-right: 5px;
           }
-
           &.active {
             color: #4772e1;
             border-color: #4772e1;
           }
-
           & + .input-area-top-tag__group__item {
             margin-left: 5px;
           }
         }
       }
     }
-
     &__input-box {
       margin-top: 7px;
       position: relative;
-
       :deep(.textarea) {
         .el-textarea__inner {
           //min-height: 55px!important;
@@ -751,15 +784,12 @@ onUnmounted(() => {
             padding-left: 20px;
           }
         }
-
       }
-
       .upload-button {
         position: absolute;
         bottom: 10px;
         left: 10px;
         opacity: 0.6;
-
         img {
           height: 30px;
 
@@ -768,30 +798,25 @@ onUnmounted(() => {
           }
         }
       }
-
       .send-button {
         position: absolute;
         bottom: 13px;
         right: 10px;
         border-radius: 20px;
         line-height: 0;
-
         &.has-stop {
           bottom: 18px;
           right: 12px;
           animation: zoomAuto 1s linear infinite;
         }
-
         &--send {
           height: 35px;
         }
-
         &--stop {
           cursor: pointer;
           height: 25px;
         }
       }
-
       .disabled {
         opacity: 0.3;
       }
@@ -800,7 +825,8 @@ onUnmounted(() => {
 }
 </style>
 <style lang="less" scoped>
-@media (min-width: 961px) {}
+@media (min-width: 961px) {
+}
 </style>
 <style lang="less" scoped>
 @media (max-width: 960px) {
@@ -846,6 +872,11 @@ onUnmounted(() => {
         bottom: 6px;
         &--send {
           height: 30px;
+        }
+        &.has-stop {
+          bottom: 10px;
+          //right: 12px;
+          //animation: zoomAuto 1s linear infinite;
         }
       }
     }

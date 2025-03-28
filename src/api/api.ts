@@ -37,6 +37,22 @@ export async function uploadFile(formData: FormData): Promise<{ data: { yswjmc: 
   })
 }
 
+export async function getChatInitWelcome(chatId: string) {
+  return new Promise((resolve) => {
+    const { appConfig } = useChatConfig()
+    axios.get(appConfig.baseURL + `/api/core/chat/init?appId=${appConfig.appId}&chatId=${chatId}`, { headers: getHeader() }).then((response) => {
+      if (response.data.code === 200) {
+        resolve(response.data)
+      } else {
+        resolve(false)
+      }
+    }).catch(err => {
+      console.error(err)
+      resolve(false)
+    })
+  })
+}
+
 export async function getHistories(data: Object) {
   return new Promise((resolve) => {
     const { appConfig } = useChatConfig()
