@@ -1,17 +1,18 @@
 <template>
   <div class="answer-content__assistant">
     <div class="flex align-center">
-      <img src="../../../assets/robot-icon.png" class="robot-bg" alt="icon"/>
+      <img src="../../../assets/robot-icon.png" class="robot-bg" alt="icon" />
       <div v-if="['preThinking', 'outputting'].includes(item.progress)"
-           style="display: flex; justify-content: flex-start; align-items: center;margin-left: 10px;color: #4A7AEB;font-weight: bold;">
+           style="display: flex; justify-content: flex-start; align-items: center;margin-left: 10px;color: #4A7AEB;font-weight: bold;"
+      >
         <el-icon class="is-loading" style="font-size: 22px">
-          <Loading/>
+          <Loading />
         </el-icon>
         <span>&nbsp;{{ item.responseText || '思考中' }}...</span>
       </div>
       <ul v-else class="reset-style answer-content__assistant__config-bar">
-        <li><el-icon @click="copyText" title="复制"><CopyDocument/></el-icon></li>
-<!--    点赞 -->
+        <li><el-icon @click="copyText" title="复制"><CopyDocument /></el-icon></li>
+        <!--    点赞 -->
         <li @click="likeOrDislike('Y')"
             v-if="!item.userBadFeedback"
             class="success"
@@ -19,7 +20,7 @@
         >
           <svg-icon icon-class="like" font-size="18"></svg-icon>
         </li>
-<!--    点踩    -->
+        <!--    点踩    -->
         <li @click="likeOrDislike('N')"
             v-if="!item.userGoodFeedback"
             class="danger"
@@ -35,11 +36,13 @@
         <div v-if="responseItem.type === 'reasoning'"
              class="answer-item__reasoning"
         >
-          <div class="answer-item__reasoning__title" @click="() => { responseItem.hide = !responseItem.hide }">
+          <div class="answer-item__reasoning__title"
+               @click="() => { responseItem.hide = !responseItem.hide }"
+          >
             <span>&nbsp;&nbsp;思考过程&nbsp;&nbsp;</span>
             <el-icon>
-              <ArrowDown v-show="responseItem.hide"/>
-              <ArrowUp v-show="!responseItem.hide"/>
+              <ArrowDown v-show="responseItem.hide" />
+              <ArrowUp v-show="!responseItem.hide" />
             </el-icon>
           </div>
           <div class="answer-item__reasoning__content"
@@ -56,18 +59,21 @@
              :class="{ answering: responseIndex === (item.value.length - 1) && item.progress !== 'done' }"
         ></div>
         <div v-else>&nbsp;</div>
-        <div v-if="responseIndex < item.value.length - 1" class="answer-item__comment--split" style="border-bottom: 1px dashed #B7B7BB;"></div>
+        <div v-if="responseIndex < item.value.length - 1"
+             class="answer-item__comment--split"
+             style="border-bottom: 1px dashed #B7B7BB;"
+        ></div>
         <div class="answer-item__comment">
-                <span v-if="item.userGoodFeedback === 'Y'" class="flex align-center">
-                  <el-icon size="18" style="margin-right: 5px;"><CircleCheck/></el-icon>问题已解决
-                </span>
+          <span v-if="item.userGoodFeedback === 'Y'" class="flex align-center">
+            <el-icon size="18" style="margin-right: 5px;"><CircleCheck /></el-icon>问题已解决
+          </span>
           <span v-else-if="item.userGoodFeedback === 'N'" class="flex align-center">
-                  <el-icon size="18" color="#ff8536" style="margin-right: 5px;"><Warning/></el-icon>问题未解决
-                </span>
+            <el-icon size="18" color="#ff8536" style="margin-right: 5px;"><Warning /></el-icon>问题未解决
+          </span>
         </div>
       </div>
     </div>
-    <el-icon @click="copyText" class="bottom-copy-btn" title="复制"><CopyDocument/></el-icon>
+    <el-icon @click="copyText" class="bottom-copy-btn" title="复制"><CopyDocument /></el-icon>
   </div>
 </template>
 
@@ -202,14 +208,14 @@ const open = (): Promise<string | false> => {
       }
     }
     .answering > :nth-last-child(1) {
-        &::after {
-          display: inline-block;
-          content: "";
-          width: 3px;
-          height: 14px;
-          transform: translate(4px, 2px) scaleY(1.3);
-          background-color: #2b5fd9;
-          animation: Markdown_blink__bDVIw .6s infinite;
+      &::after {
+        display: inline-block;
+        content: "";
+        width: 3px;
+        height: 14px;
+        transform: translate(4px, 2px) scaleY(1.3);
+        background-color: #2b5fd9;
+        animation: Markdown_blink__bDVIw .6s infinite;
       }
     }
     :deep(code) {
@@ -291,7 +297,7 @@ const open = (): Promise<string | false> => {
   }
 }
 @keyframes Markdown_blink__bDVIw {
-  0%,to {
+  0%, to {
     opacity: 0
   }
 

@@ -35,7 +35,7 @@ export const useChat = () => {
     message.value = []
   }
 
-  function resetChatCache() {
+  function reset() {
     activeChatId.value = ''
     chatList.value = []
     message.value = []
@@ -92,7 +92,7 @@ export const useChat = () => {
     setActiveChatId,
     clearChatHistory,
     message,
-    resetChatCache,
+    reset,
     updateNewQuestion,
     newChat,
     currentChatTitle,
@@ -107,9 +107,15 @@ export type AppConfigType = {
   baseURL: string;
 }
 
+export const PAGE_CONFIG_DEFAULT = {
+  ['delete.patch']: true,// 批量删除
+  ['delete.single']: true,// 删除单条
+  ['upload.file']: true,// 上传附件按钮
+}
+
 export type PageConfigType = {
-  ['delete.patch']: boolean
-  ['delete.single']: boolean
+  // 键名为PAGE_CONFIG_DEFAULT的key，值为boolean
+  [key in keyof typeof PAGE_CONFIG_DEFAULT]: boolean
 }
 
 const appConfig = reactive<AppConfigType>({
@@ -120,30 +126,43 @@ const appConfig = reactive<AppConfigType>({
   baseURL: '',
 })
 
-export const PAGE_CONFIG_DEFAULT = {
-  ['delete.patch']: true,
-  ['delete.single']: true,
-}
-
 const pageConfig = reactive(PAGE_CONFIG_DEFAULT)
 
 export const useAppConfig = () => {
 
+  // 设置应用配置
   function setAppConfig(config: AppConfigType) {
     if (!config) return;
     Object.assign(appConfig, config)
   }
 
+  // 设置页面权限
   function setPageConfig(config: PageConfigType) {
     if (!config) return;
     Object.assign(pageConfig, config)
+  }
+
+  // 判断是否有权限
+  function hasRole(key: keyof PageConfigType) {
+    return pageConfig[key]
+  }
+
+  function reset() {
+    Object.assign(appConfig, {
+      appName: '',
+      appId: '',
+      apiKey: '',
+      customUid: '',
+      baseURL: '',
+    })
+    Object.assign(pageConfig, PAGE_CONFIG_DEFAULT)
   }
 
   return {
     setAppConfig,
     setPageConfig,
     appConfig,
-    pageConfig,
+    hasRole,
   }
 }
 

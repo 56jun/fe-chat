@@ -81,7 +81,6 @@ const { activeChatId } = useChat()
   height: 100%;
   display: flex;
   flex-direction: row;
-  padding-left: 20px;
   border-radius: 16px;
   background: #ffffff;
   border: 1px solid #DFE2EA;

@@ -1,13 +1,13 @@
 <template>
   <Layout :app-config="appConfig"
           :page-config="config"
-          :show-back="false"
           @back="back"
   />
 </template>
 
 <script setup lang="ts">
 import Layout from "@/package/views/layout.vue";
+import { ref } from "vue";
 import { PAGE_CONFIG_DEFAULT } from "@/stores/userChat.ts";
 
 const appConfig = {
@@ -18,7 +18,7 @@ const appConfig = {
   baseURL: '/deepseek'
 }
 
-const config = PAGE_CONFIG_DEFAULT
+const config = ref(PAGE_CONFIG_DEFAULT)
 
 
 function back() {

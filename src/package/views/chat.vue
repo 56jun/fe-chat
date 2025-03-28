@@ -65,6 +65,7 @@
                   v-model="form.question"
                   placeholder="输入您想问的问题"
                   class="textarea"
+                  :class="{ 'no-upload': !hasRole('upload.file') }"
                   maxlength="10000"
                   resize="none"
                   autoHeight border="none"
@@ -74,7 +75,7 @@
                   @compositionend="() => compositionInputStatus = false"
                   @keydown.enter.stop="keyDownEnter"
         ></el-input>
-        <div class="upload-button">
+        <div v-if="hasRole('upload.file')" class="upload-button">
           <el-upload
             action="#"
             class="upload-demo"
@@ -149,7 +150,7 @@ const props = defineProps<{
   showBack: boolean
 }>()
 
-const { appConfig } = useAppConfig()
+const { appConfig, hasRole } = useAppConfig()
 
 const showBack = computed(() => props.showBack)
 
@@ -729,7 +730,7 @@ onUnmounted(() => {
       margin-top: 7px;
       position: relative;
 
-      :deep(.textarea ) {
+      :deep(.textarea) {
         .el-textarea__inner {
           //min-height: 55px!important;
           background: transparent;
@@ -743,6 +744,11 @@ onUnmounted(() => {
           .input-placeholder {
             font-size: 13px;
             font-family: @fontFamily;
+          }
+        }
+        &.no-upload {
+          .el-textarea__inner {
+            padding-left: 20px;
           }
         }
 
