@@ -114,6 +114,7 @@
     <el-drawer
       v-model="drawer"
       direction="ltr"
+      title="历史记录"
       size="70%"
     >
       <ChatList @select="() => drawer = false" />
@@ -833,6 +834,9 @@ onUnmounted(() => {
   .deepseek {
     .chat-header {
       justify-content: space-between;
+      &__record {
+        display: none;
+      }
       &__chat-history {
         display: initial;
       }

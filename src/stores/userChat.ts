@@ -12,6 +12,20 @@ const loading = ref<boolean>(false)
 const message = ref<ChatType.ChatMessageType[]>([])
 const currentChatTitle = ref<string>('')
 
+export interface UseChatResponse {
+  loading: boolean
+  activeChatId: string
+  currentChatTitle: string
+  history: ChatType.HistoryChatMessageType[]
+  message: ChatType.ChatMessageType[]
+  setLoading : (status: boolean) => void
+  setActiveChatId: (id: string) => void
+  clearChatHistory: () => Promise<void>
+  updateNewQuestion: (chatId: string) => void
+  newChat: (appConfig: { appId: string; appName: string; apiKey: string; baseURL: string }, force?: boolean) => Promise<void>
+  reset: () => void
+}
+
 export const useChat = () => {
 
   function setActiveChatId(id: string) {

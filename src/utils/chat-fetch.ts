@@ -43,7 +43,7 @@ enum DispatchNodeResponseKeyEnum {
   nodeResponse = 'nodeResponse'
 }
 
-type StreamFetchProps = {
+export type StreamFetchProps = {
   url?: string;
   apiKey: string;
   data: Record<string, any>;
