@@ -11,10 +11,10 @@ import { ref } from "vue";
 import { PAGE_CONFIG_DEFAULT } from "@/package/index.ts";
 
 const appConfig = {
-  apiKey: 'fastgpt-zrLYExc7wjg3QWTntFN9qc669IvYgLBDN0w4p89PzD408PXz6JpGYN',
-  appId: '67b03798c1e6e49ceb54805e',
-  appName: '高新区知识库',
-  customUid: 'gu',
+  apiKey: 'fastgpt-mxB1tJBfs3Hqsev0kWRKe1N7JxQPE4YaIScCR4GOShnvhSoJNNpmtWRNzL7CSUg',
+  appId: '67eb3c86407a54349be14e79',
+  appName: '项目总体履约分析报告',
+  customUid: 'SonFei_demo',
   baseURL: '/deepseek'
 }
 

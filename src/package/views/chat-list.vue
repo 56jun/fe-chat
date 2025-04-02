@@ -65,7 +65,7 @@ import { useScroll } from '@vueuse/core'
 // 导入垃圾桶图标
 import { ChatDotRound, Delete } from "@element-plus/icons-vue";
 import { useChat, useChatConfig, formatTime2shortText } from "@/stores/userChat";
-import { delHistory, getHistories, getPaginationRecords } from "@/api/api";
+import { delHistory, getPaginationRecords } from "@/api/api";
 import type { ChatType } from "@/type/chat.ts";
 
 const { appConfig, hasRole } = useChatConfig()
@@ -80,6 +80,8 @@ const {
   setActiveChatId,
   clearChatHistory,
   newChat,
+  pageInfo,
+  getChatList,
 } = useChat()
 
 const appListRef = ref()
@@ -126,38 +128,9 @@ async function removeChatItem(item: ChatType.HistoryChatMessageType) {
   getChatList()
 }
 
-const pageInfo = reactive({
-  page: 1,
-  offset: 0,
-  pageSize: 20,
-  total: 0,
-})
-
 const infiniteScrollDisabled = computed(() => {
   return pageInfo.total <= history.value.length
 })
-
-async function getChatList() {
-  if (!appConfig.appId) return false;
-  setLoading(true)
-  const result: any = await getHistories({
-    customUid: appConfig.customUid,
-    appId: appConfig.appId,
-    offset: (pageInfo.page - 1) * pageInfo.pageSize,
-    pageSize: 20,
-    "source": ["online", "api"]
-  })
-  setLoading(false)
-  if (!result) return;
-  const list = result.data?.list || []
-  history.value = history.value.concat(list)
-  pageInfo.total = result.data.total || 0
-  if (!list || list.length === 0) {
-    newChat(appConfig, true)
-  } else if (!activeChatId.value) {
-    setActiveChatId(list[0].chatId)
-  }
-}
 
 async function loadMore() {
   // 当前已经是最后一页了就不请求了
@@ -166,11 +139,6 @@ async function loadMore() {
   getChatList()
 }
 
-watch(() => appConfig.appId, (value) => {
-  getChatList()
-}, { immediate: true })
-
-// onMounted(getChatList)
 </script>
 
 <style lang="less" scoped>

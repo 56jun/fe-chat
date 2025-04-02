@@ -2,7 +2,7 @@
   <div class="answer-content__assistant">
     <div class="flex align-center">
       <img src="../../../assets/robot-icon.png" class="robot-bg" alt="icon" />
-      <div v-if="['preThinking', 'outputting'].includes(item.progress)"
+      <div v-if="['connecting', 'preThinking', 'outputting'].includes(item.progress)"
            style="display: flex; justify-content: flex-start; align-items: center;margin-left: 10px;color: #4A7AEB;font-weight: bold;"
       >
         <el-icon class="is-loading" style="font-size: 22px">
@@ -31,7 +31,7 @@
       </ul>
       <div v-if="item.type !== 'welcome'" class="timer">{{ formatTime2shortText(item.time) }}</div>
     </div>
-    <div v-if="item.progress !== 'preThinking'" class="answer-item">
+    <div v-if="!['connecting', 'preThinking'].includes(item.progress)" class="answer-item">
       <div v-for="(responseItem, responseIndex) in item.value" :key="`${responseIndex}`">
         <div v-if="responseItem.type === AnswerTypeEnum.reasoning && responseItem.reasoning.html"
              class="answer-item__reasoning"
@@ -157,7 +157,9 @@ const open = (): Promise<string | false> => {
 }
 
 </script>
-
+<style>
+@import "@/package/assets/css/markdown.css";
+</style>
 <style scoped lang="less">
 .answer-content__assistant {
   position: relative;

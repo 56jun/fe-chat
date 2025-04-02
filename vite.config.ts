@@ -41,7 +41,9 @@ export default defineConfig(({ mode, command }) => {
           // target:'http://localhost:3000/',
           changeOrigin: true,
           rewrite(path) {
-            return path.replace(/\/deepseek/g, '')
+            const reg = new RegExp('^' + env.VITE_BASE_URL, 'g')
+            console.log('path', path.replace(reg, ''))
+            return path.replace(reg, '')
           }
         },
       }

@@ -30,12 +30,12 @@ export namespace ChatType {
     role: 'user'
     content: { type: string; name: string; url: string, text?: string }[] | string
     // waiting|preThinking|outputting|done
-    progress: 'init' | 'preThinking' | 'outputting' | 'done'
+    progress: 'init' | 'connecting' | 'preThinking' | 'outputting' | 'done'
     [key: string]: any
   } | {
     role: 'assistant'
     // waiting|preThinking|outputting|done
-    progress: 'init' | 'preThinking' | 'outputting' | 'done'
+    progress: 'init' | 'connecting' | 'preThinking' | 'outputting' | 'done'
     userGoodFeedback?: string | undefined
     userBadFeedback?: string | undefined
     // 模型返回列表

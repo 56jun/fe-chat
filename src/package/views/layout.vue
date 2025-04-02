@@ -22,7 +22,7 @@ import {
   type AppConfigType,
   type PageConfigType
 } from "@/stores/userChat.ts";
-import { defineProps, defineEmits, watch } from "vue";
+import { defineProps, defineEmits, watch, onMounted } from 'vue'
 
 const props = defineProps({
   appConfig: {
@@ -64,7 +64,11 @@ function onBack() {
   emits('back')
 }
 
-const { activeChatId } = useChat()
+const { activeChatId, getChatList } = useChat()
+
+onMounted(() => {
+  getChatList()
+})
 
 </script>
 

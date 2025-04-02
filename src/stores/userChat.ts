@@ -1,16 +1,22 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { clearHistories, getPaginationRecords } from "@/api/api.ts";
+import { clearHistories, getHistories, getPaginationRecords } from '@/api/api.ts'
 import { type ChatType } from "@/type/chat.ts"
 import moment from "moment";
 import { guid } from "@/utils";
 
 
 const activeChatId = ref<string>('')
-const chatList = ref<ChatType.HistoryChatMessageType[]>([])
+const history = ref<ChatType.HistoryChatMessageType[]>([])
 const loading = ref<boolean>(false)
 const message = ref<ChatType.ChatMessageType[]>([])
 const currentChatTitle = ref<string>('')
+const pageInfo = reactive({
+  page: 1,
+  offset: 0,
+  pageSize: 20,
+  total: 0,
+})
 
 export interface UseChatResponse {
   loading: boolean
@@ -18,15 +24,39 @@ export interface UseChatResponse {
   currentChatTitle: string
   history: ChatType.HistoryChatMessageType[]
   message: ChatType.ChatMessageType[]
+  pageInfo: { page: number; offset: number; pageSize: number; total: number }
   setLoading : (status: boolean) => void
   setActiveChatId: (id: string) => void
   clearChatHistory: () => Promise<void>
   updateNewQuestion: (chatId: string) => void
   newChat: (appConfig: { appId: string; appName: string; apiKey: string; baseURL: string }, force?: boolean) => Promise<void>
+  getChatList: () => Promise<void>
   reset: () => void
 }
 
 export const useChat = () => {
+
+  async function getChatList() {
+    if (!appConfig.appId) return false;
+    setLoading(true)
+    const result: any = await getHistories({
+      customUid: appConfig.customUid,
+      appId: appConfig.appId,
+      offset: (pageInfo.page - 1) * pageInfo.pageSize,
+      pageSize: 20,
+      "source": ["online", "api"]
+    })
+    setLoading(false)
+    if (!result) return;
+    const list = result.data?.list || []
+    history.value = history.value.concat(list)
+    pageInfo.total = result.data.total || 0
+    if (!list || list.length === 0) {
+      newChat(appConfig, true)
+    } else if (!activeChatId.value) {
+      setActiveChatId(list[0].chatId)
+    }
+  }
 
   function setActiveChatId(id: string) {
     if (!id) {
@@ -45,18 +75,18 @@ export const useChat = () => {
     setLoading(false)
     if (!res) return;
     ElMessage.success('操作成功')
-    chatList.value = []
+    history.value = []
     message.value = []
   }
 
   function reset() {
     activeChatId.value = ''
-    chatList.value = []
+    history.value = []
     message.value = []
   }
 
   function updateNewQuestion(chatId: string) {
-    const chat = chatList.value.find(chat => chat.chatId === chatId)
+    const chat = history.value.find(chat => chat.chatId === chatId)
     if (!chat) return;
     // @ts-ignore
     const lastQuestionIndex = message.value.findLastIndex((chat: ChatType.ChatMessageType) => chat.role === 'user')
@@ -94,22 +124,24 @@ export const useChat = () => {
       type: 'welcome',
       top: false,
     }
-    chatList.value.unshift(newChatItem)
+    history.value.unshift(newChatItem)
     setActiveChatId(chatId)
   }
 
   return {
     loading,
     activeChatId,
-    history: chatList,
+    currentChatTitle,
+    pageInfo,
+    message,
+    history,
     setLoading,
     setActiveChatId,
     clearChatHistory,
-    message,
     reset,
     updateNewQuestion,
     newChat,
-    currentChatTitle,
+    getChatList,
   }
 }
 

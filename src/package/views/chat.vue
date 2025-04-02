@@ -140,6 +140,10 @@ import FileIcon from "./file-icon.vue";
 import { marked } from 'marked'
 import ChatAnswer from "./components/chat-answer.vue";
 
+const formatMarkdown = (value: string) => {
+  return marked.parse(value)
+}
+
 import { copyDomText } from "@/utils/index.ts";
 import { getChatApi, getChatInitWelcome, getPaginationRecords, uploadFile } from "@/api/api";
 
@@ -249,8 +253,8 @@ async function sendMessageChat() {
   try {
     message.value.push({
       role: 'assistant',
-      progress: 'init',
-      responseText: '',
+      progress: 'connecting',
+      responseText: '连接中',
       value: []
     });
     loading.value = true;
@@ -311,7 +315,7 @@ function onMessage(msg: ChatType.ResponseQueueItemType) {
 
       const lastReasoning = lastItem.value[lastItem.value.length - 1]
       lastReasoning.reasoning.content += (msg.reasoningText || '')
-      lastReasoning.reasoning.html = marked.parse(lastReasoning.reasoning.content)
+      lastReasoning.reasoning.html = formatMarkdown(lastReasoning.reasoning.content)
 
     } else if (msg.text) {
       if (lastValidResponseType !== AnswerTypeEnum.text) {
@@ -331,7 +335,7 @@ function onMessage(msg: ChatType.ResponseQueueItemType) {
 
       const lastText = lastItem.value[lastItem.value.length - 1]
       lastText.text.content += (msg.text || '')
-      lastText.text.html = marked.parse(lastText.text.content || '')
+      lastText.text.html = formatMarkdown(lastText.text.content || '')
     }
   } else if (msg.event === SseResponseEventEnum.flowNodeStatus) {
     if (!lastValidResponseType) {
@@ -454,10 +458,10 @@ async function getMessage(chatId: string) {
           return x.type === AnswerTypeEnum.text && x.text.content || x.type === AnswerTypeEnum.reasoning && x.reasoning.content
         }).map((x: ChatType.ResponseAnswerItemType) => {
           if (x.type === AnswerTypeEnum.text) {
-            x.text.html = marked.parse(x.text.content) as string;
+            x.text.html = formatMarkdown(x.text.content) as string;
           } else if (x.type === AnswerTypeEnum.reasoning) {
             x.hide = true
-            x.reasoning.html = marked.parse(x.reasoning.content) as string;
+            x.reasoning.html = formatMarkdown(x.reasoning.content) as string;
           }
           return x
         }),
@@ -498,7 +502,7 @@ async function getMessage(chatId: string) {
             type: 'text',
             text: {
               content: welcomeText,
-              html: marked.parse(welcomeText) as string,
+              html: formatMarkdown(welcomeText) as string,
             }
           }]
         } as ChatType.ChatMessageType)
