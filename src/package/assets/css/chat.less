@@ -1,0 +1,19 @@
+.chat__config-bar {
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  //padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  overflow: hidden;
+  li {
+    cursor: pointer;
+    padding: 4px 5px;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    & + li {
+      border-left: 1px solid #E2E8F0;
+    }
+  }
+}

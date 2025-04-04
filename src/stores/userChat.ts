@@ -85,6 +85,13 @@ export const useChat = () => {
     message.value = []
   }
 
+  function getQuestionText(item: ChatType.ChatMessageType) {
+    const text = Array.isArray(item.content) ? item.content.filter(x => x.type === 'text').map(x => x.text).join('')
+      : item.content
+    if (!text) return;
+    return text;
+  }
+
   function updateNewQuestion(chatId: string) {
     const chat = history.value.find(chat => chat.chatId === chatId)
     if (!chat) return;
@@ -92,9 +99,7 @@ export const useChat = () => {
     const lastQuestionIndex = message.value.findLastIndex((chat: ChatType.ChatMessageType) => chat.role === 'user')
     if (lastQuestionIndex === -1) return;
     const item = message.value[lastQuestionIndex]
-    const text = Array.isArray(item.content) ? item.content.filter(x => x.type === 'text').map(x => x.text).join('')
-      : item.content
-    if (!text) return;
+    const text = getQuestionText(item)
     console.log('text', text)
     chat.title = text
     currentChatTitle.value = text
@@ -142,6 +147,7 @@ export const useChat = () => {
     updateNewQuestion,
     newChat,
     getChatList,
+    getQuestionText,
   }
 }
 
@@ -213,22 +219,3 @@ export const useChatConfig = () => {
   }
 }
 
-
-/**
- * 使用moment计算时间距离现在的时间
- * 1、如果在当天，就显示时+分
- * 2、如果在当天，就显示时+分
- * 3、如果在昨天，就显示昨天+时+分
- * 4、如果在今年，就显示月+日
- * */
-export function formatTime2shortText(time: string) {
-  const now = new Date().getTime()
-  const diff = now - (new Date(time)).getTime()
-  if (diff < 1000 * 60 * 60 * 24) {
-    return moment(time).format('HH:mm')
-  }
-  if (diff < 1000 * 60 * 60 * 24 * 2) {
-    return '昨天'
-  }
-  return moment(time).format('MM-DD')
-}

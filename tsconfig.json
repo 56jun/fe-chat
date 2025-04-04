@@ -1,4 +1,11 @@
 {
+  "compilerOptions": {
+    "target": "ES6",
+    "declaration": true,
+    "module": "esnext",
+    "outDir": "./dist",
+    "strict": true
+  },
   "files": [],
   "references": [
     {

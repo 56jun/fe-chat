@@ -1,20 +1,3 @@
-@import 'base.css';
-
-html,body {
-  width: 100%;
-  height: 100%;
-  background-color: rgba(242, 242, 246, 1);
-}
-* {
-  outline: none;
-}
-#app {
-  height: 100%;
-  //font-weight: normal;
-  font-size: 14px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
 .reset-style {
   margin: 0;
   padding: 0;
@@ -27,8 +10,14 @@ html,body {
   &.align-center {
     align-items: center;
   }
+  &.flex-column {
+    flex-direction: column;
+  }
   &.space-between {
     justify-content: space-between;
+  }
+  &.justify-end {
+    justify-content: flex-end;
   }
 }
 

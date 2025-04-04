@@ -10,7 +10,7 @@
         </el-icon>
         <span>&nbsp;{{ item.responseText || '思考中' }}...</span>
       </div>
-      <ul v-else class="reset-style answer-content__assistant__config-bar">
+      <ul v-else class="reset-style chat__config-bar">
         <li><el-icon @click="copyText" title="复制"><CopyDocument /></el-icon></li>
         <!--    点赞 -->
         <li @click="likeOrDislike('Y')"
@@ -157,9 +157,6 @@ const open = (): Promise<string | false> => {
 }
 
 </script>
-<style>
-@import "@/package/assets/css/markdown.css";
-</style>
 <style scoped lang="less">
 .answer-content__assistant {
   position: relative;
@@ -168,25 +165,6 @@ const open = (): Promise<string | false> => {
   padding: 12px;
   margin-left: 7px;
   margin-bottom: 10px;
-  &__config-bar {
-    margin-left: 10px;
-    display: flex;
-    align-items: center;
-    //padding: 5px 10px;
-    border-radius: 6px;
-    border: 1px solid #E2E8F0;
-    overflow: hidden;
-    li {
-      cursor: pointer;
-      padding: 4px 5px;
-      display: flex;
-      align-items: center;
-      font-weight: bold;
-      & + li {
-        border-left: 1px solid #E2E8F0;
-      }
-    }
-  }
   .robot-bg {
     width: 33px;
     height: 33px;

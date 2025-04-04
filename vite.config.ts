@@ -42,7 +42,6 @@ export default defineConfig(({ mode, command }) => {
           changeOrigin: true,
           rewrite(path) {
             const reg = new RegExp('^' + env.VITE_BASE_URL, 'g')
-            console.log('path', path.replace(reg, ''))
             return path.replace(reg, '')
           }
         },

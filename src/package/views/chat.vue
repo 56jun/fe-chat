@@ -1,18 +1,20 @@
 <template>
   <div v-loading="requestLoading" class="deepseek">
+    <!--对话头部标题操作按钮等-->
     <div class="chat-header flex align-center">
       <div class="flex align-center chat-header__left">
         <el-icon v-if="showBack" size="22" @click="onBack" style="margin-right: 10px;"><ArrowLeftBold /></el-icon>
-        <span class="chat-header__chat-title">{{
-            (currentChatTitle || '新对话').slice(0, 20)
-                                              }}</span>
+        <span class="chat-header__chat-title">
+          {{ (currentChatTitle || '新对话').slice(0, 20) }}
+        </span>
         <img @click="viewDrawer"
              class="chat-header__chat-history"
              src="@/assets/app-config.webp"
              height="20"
-        >
+        />
         <div class="flex align-center chat-header__record"
-             style="margin-left: 10px;line-height: 0;flex-shrink: 0;" type="primary"
+             style="margin-left: 10px;line-height: 0;flex-shrink: 0;"
+             type="primary"
         >
           <el-icon>
             <Clock />
@@ -26,28 +28,11 @@
     <div ref="answerWindowRef" class="answer-box">
       <div class="answer-content">
         <template v-for="(item, index) in message">
-          <div v-if="item.role === 'user'" style="display: flex; justify-content: flex-end">
-            <!--            智能问答-->
-            <div v-if="Array.isArray(item.content)" class="question-item">
-              <template v-for="itemChat in item.content">
-                <div v-if="itemChat.type === 'file_url'" class="question-item__file">
-                  <FileIcon :surffix="getSuffix(itemChat.name)"
-                            class="question-item__file--icon"
-                  ></FileIcon>
-                  <div class="question-item__file--name u-line-1">{{ itemChat.name }}</div>
-                </div>
-                <div v-if="itemChat.type === 'text'" @click="copyText(itemChat.text)"
-                     class="question-item__text select-text"
-                >{{ itemChat.text }}
-                </div>
-              </template>
-            </div>
-            <!--            纯文本-->
-            <div v-else class="question-item select-text" @click="copyText(item.content)">
-              {{ item.content }}
-            </div>
-          </div>
-          <!--          回答-->
+          <!--问题-->
+          <ChatQuestion v-if="item.role === 'user'"
+                        :item="item"
+          />
+          <!--回答-->
           <ChatAnswer v-if="item.role === 'assistant'"
                       :item="item"
                       @updateFeedback="getMessage(activeChatId)"
@@ -60,9 +45,11 @@
         <div v-for="(file, index) in fileList" class="input-area__file">
           <FileIcon :surffix="getSuffix(file.name)" class="input-area__file__icon"></FileIcon>
           <div class="input-area__file__name">{{ file.name }}</div>
-          <img @click="deleteFile(index)" :src="CloseTag" class="input-area__file__close"
+          <img @click="deleteFile(index)"
+               :src="CloseTag"
+               class="input-area__file__close"
                alt="关闭"
-          >
+          />
         </div>
       </div>
       <div class="input-area__input-box">
@@ -75,7 +62,7 @@
                   maxlength="10000"
                   resize="none"
                   autoHeight border="none"
-                  :autosize="true"
+                  :autosize="{ minRows: 1, maxRows: 9 }"
                   confirm-type="search"
                   @compositionstart="() => compositionInputStatus = true"
                   @compositionend="() => compositionInputStatus = false"
@@ -132,30 +119,29 @@ import {
   onUnmounted,
   reactive,
   ref,
-  watch,
-} from "vue";
-import { ElInput, ElMessage, type UploadFile } from "element-plus";
-import ChatList from "@/package/views/chat-list.vue";
-import FileIcon from "./file-icon.vue";
+  watch
+} from 'vue'
+import { ElInput, ElMessage, ElDrawer, type UploadFile } from 'element-plus'
+import ChatList from '@/package/views/chat-list.vue'
+import FileIcon from './file-icon.vue'
 import { marked } from 'marked'
-import ChatAnswer from "./components/chat-answer.vue";
+import ChatAnswer from './components/chat-answer.vue'
+import { getSuffix } from '@/utils/index.ts'
+import { getChatApi, getChatInitWelcome, getPaginationRecords, uploadFile } from '@/api/api'
 
-const formatMarkdown = (value: string) => {
+import sendImg from '@/assets/send.png'
+import Fujian from '@/assets/fujian.png'
+import stopSvg from '@/assets/icons/svg/stop.svg'
+import CloseTag from '@/assets/close-tag.png'
+
+import { useChat, useChatConfig } from '@/stores/userChat.ts'
+import { streamFetch } from '@/utils/chat-fetch.ts'
+import { AnswerTypeEnum, type ChatType, SseResponseEventEnum } from '@/type/chat'
+import ChatQuestion from '@/package/views/components/chat-question.vue'
+
+function formatMarkdown(value: string) {
   return marked.parse(value)
 }
-
-import { copyDomText } from "@/utils/index.ts";
-import { getChatApi, getChatInitWelcome, getPaginationRecords, uploadFile } from "@/api/api";
-
-import sendImg from "@/assets/send.png";
-import Fujian from "@/assets/fujian.png";
-import stopSvg from "@/assets/icons/svg/stop.svg";
-import CloseTag from "@/assets/close-tag.png";
-
-import { useChat, useChatConfig } from "@/stores/userChat.ts";
-import { streamFetch } from "@/utils/chat-fetch.ts";
-import { AnswerTypeEnum, type ChatType, SseResponseEventEnum } from "@/type/chat";
-
 
 const props = defineProps<{
   showBack: boolean
@@ -165,7 +151,7 @@ const { appConfig, hasRole } = useChatConfig()
 
 const showBack = computed(() => props.showBack)
 
-const emits = defineEmits(["back"])
+const emits = defineEmits(['back'])
 
 const { activeChatId, message, history, updateNewQuestion, newChat, currentChatTitle } = useChat()
 
@@ -182,13 +168,13 @@ const progressGlobal = computed(() => {
 })
 const compositionInputStatus = ref(false)
 const form = reactive({
-  question: '',
+  question: ''
 })
 const fileList = ref<UploadFile[]>([])
 const abortController = ref<null | AbortController>(null)
 
 const answerWindowRef = ref<HTMLElement>()
-const isAutoScroll = ref(true);
+const isAutoScroll = ref(true)
 
 
 const drawer = ref<boolean>(false)
@@ -202,19 +188,19 @@ function onBack() {
 }
 
 function keyDownEnter(event: Event | KeyboardEvent) {
-  if ("shiftKey" in event && event.shiftKey) return;
-  if (compositionInputStatus.value) return;
-  event.preventDefault();
+  if ('shiftKey' in event && event.shiftKey) return
+  if (compositionInputStatus.value) return
+  event.preventDefault()
   if (progressGlobal.value === 'outputting') {
     ElMessage.warning('请先停止上一轮对话')
     return
   }
-  sendMessageChat();
+  sendMessageChat()
 }
 
 async function sendMessageChat() {
   if (loading.value || !form.question || ['preThinking', 'outputting'].includes(progressGlobal.value)) {
-    return false;
+    return false
   }
 
   let messageItem: ChatType.ChatMessageType = {
@@ -230,12 +216,12 @@ async function sendMessageChat() {
       role: 'user',
       content: [
         ...fileMessageList,
-        { type: 'text', text: form.question },
+        { type: 'text', text: form.question }
       ]
     } as ChatType.ChatMessageType
     fileList.value = []
   }
-  message.value.push(messageItem);
+  message.value.push(messageItem)
   const params = {
     chatId: activeChatId.value,
     customUid: appConfig.customUid,// 自定义的用户 ID。在历史记录中，该条记录的使用者会显示为 xxxxxx
@@ -248,35 +234,35 @@ async function sendMessageChat() {
     // 是否返回中间值（模块状态，响应的完整结果等），stream 模式下会通过 event 进行区分，非 stream 模式结果保存在 responseData 中。
     detail: true,
     appId: appConfig.appId,
-    appName: appConfig.appName,
-  };
+    appName: appConfig.appName
+  }
   try {
     message.value.push({
       role: 'assistant',
       progress: 'connecting',
       responseText: '连接中',
       value: []
-    });
-    loading.value = true;
-    answerStartRender.value = false;
-    reasoningAnswerDone.value = false;
-    form.question = '';
-    isAutoScroll.value = true;
+    })
+    loading.value = true
+    answerStartRender.value = false
+    reasoningAnswerDone.value = false
+    form.question = ''
+    isAutoScroll.value = true
     scrollToBottom()
 
     // 创建 AbortController 实例
-    abortController.value = new AbortController();
+    abortController.value = new AbortController()
 
     streamFetch({
       url: getChatApi(),
       data: params,
       onMessage,
       abortCtrl: abortController.value,
-      apiKey: appConfig.apiKey,
+      apiKey: appConfig.apiKey
     }).catch((err) => {
       console.error(err)
-      loading.value = false;
-      abortController.value = null;
+      loading.value = false
+      abortController.value = null
       const lastItem: ChatType.ChatMessageType = message.value[message.value.length - 1]
       lastItem.responseText = ''
       lastItem.progress = 'done'
@@ -305,7 +291,7 @@ function onMessage(msg: ChatType.ResponseQueueItemType) {
           [AnswerTypeEnum.reasoning]: {
             content: '',
             html: ''
-          },
+          }
         })
       }
       lastValidResponseType = AnswerTypeEnum.reasoning
@@ -343,18 +329,18 @@ function onMessage(msg: ChatType.ResponseQueueItemType) {
     }
     lastValidResponseType = 'flowNodeStatus'
     let name = msg.name
-    if (name === "workflow:template.ai_chat") {
+    if (name === 'workflow:template.ai_chat') {
       name = 'AI 对话'
     }
     lastItem.responseText = name || ''
   } else if (msg.event === SseResponseEventEnum.done) {
     console.log('---DONE---', msg)
-    loading.value = false;
-    abortController.value = null;
+    loading.value = false
+    abortController.value = null
     lastItem.responseText = ''
     lastItem.progress = 'done'
     // getMessage(activeChatId.value)
-    console.log('finally');
+    console.log('finally')
     updateNewQuestion(activeChatId.value)
   }
   scrollToBottom()
@@ -378,18 +364,14 @@ function removePreviousEmptyAnswer(type: AnswerTypeEnum) {
 }
 
 function stopResponse() {
-  if (!abortController.value) return;
+  if (!abortController.value) return
   abortController.value.abort()
-  abortController.value = null;
+  abortController.value = null
 }
 
 function checkSuffix(str: string) {
-  const strRegex = /\.(txt|docx|csv|xlsx|pdf|md|html|pptx)$/;
-  return strRegex.test(str.toLowerCase());
-}
-
-function getSuffix(str = '') {
-  return str.match(/\.(txt|docx|csv|xlsx|pdf|md|html|pptx)$/)?.[1]
+  const strRegex = /\.(txt|docx|csv|xlsx|pdf|md|html|pptx)$/
+  return strRegex.test(str.toLowerCase())
 }
 
 function deleteFile(index: number) {
@@ -400,7 +382,7 @@ async function onChange(file: UploadFile) {
   if (!checkSuffix(file?.name)) {
     return ElMessage.warning('请选择以下类型的文件：txt、docx、csv、xlsx、pdf、md、html、pptx等')
   }
-  const formData = new FormData();
+  const formData = new FormData()
   uploadLoading.value = true
   // @ts-ignore
   formData.append('file', file?.raw)
@@ -426,14 +408,7 @@ const scrollToBottom = () => {
   }
 }
 
-function copyText(text: string | undefined) {
-  if (!text) return;
-  if (copyDomText(text)) {
-    ElMessage.success("已复制到剪贴板");
-  }
-}
-
-const requestLoading = ref(false);
+const requestLoading = ref(false)
 
 async function getMessage(chatId: string) {
   requestLoading.value = true
@@ -441,7 +416,7 @@ async function getMessage(chatId: string) {
     offset: 0,
     pageSize: 20,
     appId: appConfig.appId,
-    chatId,
+    chatId
   })
   requestLoading.value = false
   message.value = (result?.data?.list || []).map((item: ChatType.ChatMessageType) => {
@@ -458,13 +433,13 @@ async function getMessage(chatId: string) {
           return x.type === AnswerTypeEnum.text && x.text.content || x.type === AnswerTypeEnum.reasoning && x.reasoning.content
         }).map((x: ChatType.ResponseAnswerItemType) => {
           if (x.type === AnswerTypeEnum.text) {
-            x.text.html = formatMarkdown(x.text.content) as string;
+            x.text.html = formatMarkdown(x.text.content) as string
           } else if (x.type === AnswerTypeEnum.reasoning) {
             x.hide = true
-            x.reasoning.html = formatMarkdown(x.reasoning.content) as string;
+            x.reasoning.html = formatMarkdown(x.reasoning.content) as string
           }
           return x
-        }),
+        })
       }
       return resultItem
     } else {
@@ -474,16 +449,16 @@ async function getMessage(chatId: string) {
           if (x.type === 'text') {
             return {
               type: x.type,
-              text: x.text.content,
+              text: x.text.content
             }
           } else if (x.type === 'file') {
             return {
               type: 'file_url',
               name: x.file.name,
-              url: x.file.url,
+              url: x.file.url
             }
           }
-        }),
+        })
       }
     }
   })
@@ -502,7 +477,7 @@ async function getMessage(chatId: string) {
             type: 'text',
             text: {
               content: welcomeText,
-              html: formatMarkdown(welcomeText) as string,
+              html: formatMarkdown(welcomeText) as string
             }
           }]
         } as ChatType.ChatMessageType)
@@ -512,7 +487,7 @@ async function getMessage(chatId: string) {
   scrollToBottom()
   // 自动聚焦
   nextTick(() => {
-    userInput.value?.focus();
+    userInput.value?.focus()
   })
 }
 
@@ -520,7 +495,7 @@ watch(() => activeChatId?.value, (chatId) => {
   stopResponse()
   if (!chatId) {
     message.value = []
-    return;
+    return
   }
   getMessage(chatId)
 }, { immediate: true })
@@ -528,12 +503,12 @@ watch(() => activeChatId?.value, (chatId) => {
 function onScroll() {
   if (answerWindowRef.value) {
     const { scrollHeight, scrollTop, offsetHeight } = answerWindowRef.value
-    isAutoScroll.value = scrollTop + offsetHeight + 2 >= scrollHeight;
+    isAutoScroll.value = scrollTop + offsetHeight + 2 >= scrollHeight
   }
 }
 
 onMounted(() => {
-  answerWindowRef.value?.addEventListener('scroll', onScroll);
+  answerWindowRef.value?.addEventListener('scroll', onScroll)
   scrollToBottom()
 })
 
@@ -593,45 +568,6 @@ onUnmounted(() => {
     position: unset;
     height: 0;
     flex: 1 0 0;
-
-    .question-item {
-      max-width: calc(100% - 50px);
-      border: 1px solid #f3f6fb;
-      min-height: 20px;
-      padding: 8px 15px;
-      word-break: break-all;
-      position: relative;
-      display: inline-block;
-      font-size: var(--font-base-size);
-      margin-right: 10px;
-      margin-bottom: 10px;
-      background: #2D7CFF;
-      border-radius: 10px 2px 10px 10px;
-      color: #fff;
-
-      &__text {
-        display: block;
-      }
-
-      &__file {
-        display: inline-flex;
-        align-items: center;
-        padding: 2px 4px;
-        background-color: white;
-        border-radius: 5px;
-        color: #3b2300;
-        margin: 2px 2px 5px;
-        font-size: var(--font-base-size);
-
-        &--icon {
-          width: 14px;
-        }
-
-        &--name {
-          margin-left: 5px;
-        }
-      }
-    }
 
     .robot-bg {
       width: 33px;

@@ -7,7 +7,7 @@ import moment from "moment";
  * 3、如果在昨天，就显示昨天+时+分
  * 4、如果在今年，就显示月+日
  * */
-export function formatTime2shortText(time: number) {
+export function formatTime2shortText(time: string) {
   const now = new Date().getTime()
   const diff = now - (new Date(time)).getTime()
   if (diff < 1000 * 60 * 60 * 24) {
@@ -66,4 +66,11 @@ export function copyDomText(val: string) {
   // 移除input元素
   document.body.removeChild(input);
   return true;
+}
+
+/**
+ * 获取文件后缀名
+ * */
+export function getSuffix(str = '') {
+  return str.match(/\.(txt|docx|csv|xlsx|pdf|md|html|pptx)$/)?.[1]
 }

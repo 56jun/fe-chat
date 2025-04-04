@@ -6,7 +6,6 @@ import {
   PAGE_CONFIG_DEFAULT,
   useChatConfig,
   useChat,
-  formatTime2shortText,
 } from './src/stores/userChat';
 import type { UseChatResponse } from './src/stores/userChat'
 

@@ -64,7 +64,8 @@ import { ElMessage } from 'element-plus'
 import { useScroll } from '@vueuse/core'
 // 导入垃圾桶图标
 import { ChatDotRound, Delete } from "@element-plus/icons-vue";
-import { useChat, useChatConfig, formatTime2shortText } from "@/stores/userChat";
+import { useChat, useChatConfig } from "@/stores/userChat";
+import { formatTime2shortText } from '@/utils'
 import { delHistory, getPaginationRecords } from "@/api/api";
 import type { ChatType } from "@/type/chat.ts";
 

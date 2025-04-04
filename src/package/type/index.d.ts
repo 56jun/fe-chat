@@ -6,13 +6,13 @@ import {
   PAGE_CONFIG_DEFAULT,
   useChatConfig,
   useChat,
-  formatTime2shortText,
 } from './src/stores/userChat';
 import type { UseChatResponse } from './src/stores/userChat'
 
 export declare function install(app: App): void
 export declare function streamFetch(config: StreamFetchProps): void
 export declare function useChat(config: StreamFetchProps): UseChatResponse
+export declare function formatTime2shortText(time: string): string
 export declare function useChatConfig(): {
   setAppConfig: (config: AppConfigType) => void
   setPageConfig: (config: PageConfigType) => void
