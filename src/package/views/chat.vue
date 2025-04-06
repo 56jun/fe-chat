@@ -1,5 +1,5 @@
 <template>
-  <div v-loading="requestLoading" class="deepseek">
+  <div class="deepseek">
     <!--对话头部标题操作按钮等-->
     <div class="chat-header flex align-center">
       <div class="flex align-center chat-header__left">
@@ -153,12 +153,12 @@ const showBack = computed(() => props.showBack)
 
 const emits = defineEmits(['back'])
 
-const { activeChatId, message, history, updateNewQuestion, newChat, currentChatTitle } = useChat()
+const { loading, activeChatId, message, setLoading, updateNewQuestion, newChat, currentChatTitle } = useChat()
 
 const needUpdateParentChatListTitle = ref(false)
 
 const userInput = ref()
-const loading = ref(false)
+const loadingChat = ref(false)
 const uploadLoading = ref(false)
 const answerStartRender = ref(false)
 const reasoningAnswerDone = ref(false)
@@ -199,7 +199,7 @@ function keyDownEnter(event: Event | KeyboardEvent) {
 }
 
 async function sendMessageChat() {
-  if (loading.value || !form.question || ['preThinking', 'outputting'].includes(progressGlobal.value)) {
+  if (loadingChat.value || loading.value || !form.question || ['preThinking', 'outputting'].includes(progressGlobal.value)) {
     return false
   }
 
@@ -243,7 +243,7 @@ async function sendMessageChat() {
       responseText: '连接中',
       value: []
     })
-    loading.value = true
+    loadingChat.value = true
     answerStartRender.value = false
     reasoningAnswerDone.value = false
     form.question = ''
@@ -261,7 +261,7 @@ async function sendMessageChat() {
       apiKey: appConfig.apiKey
     }).catch((err) => {
       console.error(err)
-      loading.value = false
+      loadingChat.value = false
       abortController.value = null
       const lastItem: ChatType.ChatMessageType = message.value[message.value.length - 1]
       lastItem.responseText = ''
@@ -278,7 +278,6 @@ async function sendMessageChat() {
 }
 
 let lastValidResponseType = ''
-
 function onMessage(msg: ChatType.ResponseQueueItemType) {
   const lastItem: ChatType.ChatMessageType = message.value[message.value.length - 1]
 
@@ -335,7 +334,7 @@ function onMessage(msg: ChatType.ResponseQueueItemType) {
     lastItem.responseText = name || ''
   } else if (msg.event === SseResponseEventEnum.done) {
     console.log('---DONE---', msg)
-    loading.value = false
+    loadingChat.value = false
     abortController.value = null
     lastItem.responseText = ''
     lastItem.progress = 'done'
@@ -464,7 +463,9 @@ async function getMessage(chatId: string) {
   })
   needUpdateParentChatListTitle.value = message.value.length === 0
   if (message.value.length === 0) {
+    setLoading(true)
     const result: any = await getChatInitWelcome(chatId)
+    setLoading(true)
     if (result) {
       const welcomeText = result?.data?.app?.chatConfig?.welcomeText || ''
       if (welcomeText) {

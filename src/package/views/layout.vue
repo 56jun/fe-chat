@@ -1,5 +1,5 @@
 <template>
-<div class="layout__app-chat">
+<div class="layout__app-chat" v-bind="$attrs">
   <div class="chat-wrapper">
     <ChatList />
     <div v-if="activeChatId" class="chat-detail">
@@ -35,7 +35,7 @@ const props = defineProps({
       customUid: '',
     })
   },
-  pageConfig: {
+  permissionConfig: {
     default: (): PageConfigType => PAGE_CONFIG_DEFAULT
   },
   showBack: {
@@ -52,14 +52,14 @@ const { setAppConfig, setPageConfig } = useChatConfig()
 
 watch(() => props.appConfig, (config) => {
   setAppConfig(config)
-}, { immediate: true })
+}, { immediate: true, deep: true })
 
-watch(() => props.pageConfig, (config) => {
+watch(() => props.permissionConfig, (config) => {
   setPageConfig(config)
-}, { immediate: true })
+}, { immediate: true, deep: true })
+
 
 const emits = defineEmits(['back'])
-
 function onBack() {
   emits('back')
 }

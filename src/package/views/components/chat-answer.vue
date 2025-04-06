@@ -11,20 +11,23 @@
         <span>&nbsp;{{ item.responseText || '思考中' }}...</span>
       </div>
       <ul v-else class="reset-style chat__config-bar">
-        <li><el-icon @click="copyText" title="复制"><CopyDocument /></el-icon></li>
+        <li><el-icon @click="copyText" title="复制" size="16"><CopyDocument /></el-icon></li>
         <!--    点赞 -->
         <li @click="likeOrDislike('Y')"
             v-if="!item.userBadFeedback && item.type !== 'welcome'"
             class="success"
-            :class="{ active: item.userGoodFeedback }"
+            :disabled="loading"
+            :class="{ 'active': item.userGoodFeedback }"
         >
+          <!--<LikeSvgIcon />-->
           <svg-icon icon-class="like" font-size="18"></svg-icon>
         </li>
         <!--    点踩    -->
         <li @click="likeOrDislike('N')"
             v-if="!item.userGoodFeedback && item.type !== 'welcome'"
             class="danger"
-            :class="{ active: item.userBadFeedback }"
+            :disabled="loading"
+            :class="{ 'active': item.userBadFeedback }"
         >
           <svg-icon icon-class="like" font-size="18" style="transform: rotateX(180deg)"></svg-icon>
         </li>
@@ -48,7 +51,7 @@
           <div class="answer-item__reasoning__content"
                :class="{
                   'hide': responseItem.hide,
-                  answering: responseIndex === (item.value.length - 1) && item.progress !== 'done'
+                  'answering': responseIndex === (item.value.length - 1) && item.progress !== 'done'
                }"
                v-html="responseItem.reasoning?.html"
           ></div>
@@ -56,7 +59,7 @@
         <div v-else-if="responseItem.type === AnswerTypeEnum.text && responseItem.text?.html"
              v-html="responseItem.text?.html"
              class="markdown-body select-text"
-             :class="{ answering: responseIndex === (item.value.length - 1) && item.progress !== 'done' }"
+             :class="{ 'answering': responseIndex === (item.value.length - 1) && item.progress !== 'done' }"
         ></div>
         <div v-else>&nbsp;</div>
         <div v-if="responseIndex < item.value.length - 1"
@@ -87,12 +90,11 @@ import { updateUserFeedback } from "@/api/api.ts";
 import { formatTime2shortText, copyDomText } from "@/utils/index.ts";
 import { useChatConfig, useChat } from "@/stores/userChat.ts";
 
-
 const props = defineProps<{
   item: ChatType.ChatMessageType
 }>()
 
-const { activeChatId } = useChat()
+const { loading, activeChatId, setLoading } = useChat()
 
 const { appConfig } = useChatConfig()
 const emits = defineEmits(['updateFeedback'])
@@ -108,6 +110,7 @@ function copyText() {
 }
 
 async function likeOrDislike(type: 'Y' | 'N') {
+  if (loading.value) return;
   const params: {
     appId: string
     chatId: string
@@ -133,7 +136,9 @@ async function likeOrDislike(type: 'Y' | 'N') {
     if (!feedback) return;
     params.userBadFeedback = feedback
   }
+  setLoading(true)
   const result = await updateUserFeedback(params)
+  setLoading(false)
   if (!result) return;
   emits('updateFeedback')
 }

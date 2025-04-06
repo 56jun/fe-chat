@@ -7,6 +7,9 @@ import ChatList from '@/package/views/chat-list.vue';
 // 如果您正在使用CDN引入，请删除下面一行。
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
+import 'virtual:svg-icons-register'
+import SvgIcon from '@/components/SvgIcon/index.vue'
+
 import '@/package/assets/css/main.less'
 import '@/package/assets/css/markdown.css'
 import '@/package/assets/css/chat.less'
@@ -23,6 +26,7 @@ function install(app: App) {
 
   app.component('Chat', Chat);
   app.component('ChatList', ChatList);
+  app.component('svg-icon', SvgIcon)
   app.use(pinia)
 }
 

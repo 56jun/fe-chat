@@ -10,7 +10,7 @@ const router = createRouter({
       redirect: '/chat',
     },
     {
-      path: '/chat',
+      path: '/chat/:appId/:apiKey/:appName',
       name: 'chat',
       component: Chat,
     },

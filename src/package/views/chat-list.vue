@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-list" v-loading="loading">
+  <div class="chat-list">
     <div class="flex align-center chat-list__app">
       <el-icon style="font-size: 20px; color: #4772e1;">
         <Platform />
@@ -8,7 +8,9 @@
     </div>
     <div class="chat-list__chat-config">
       <el-button
-        @click="newChat(appConfig)" class="chat-list__chat-config__new-chat" :icon="ChatDotRound"
+        :disabled="loading"
+        @click="newChat(appConfig)" class="chat-list__chat-config__new-chat"
+        :icon="ChatDotRound"
         round
       >新对话
       </el-button>
@@ -17,7 +19,7 @@
                      cancel-button-text="取消"
       >
         <template #reference>
-          <el-button circle>
+          <el-button :disabled="loading" circle>
             <svg class="chakra-icon css-1fo93lp" viewBox="0 0 1024 1024"
                  xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true"
             >
@@ -47,6 +49,7 @@
         <el-button @click.stop="removeChatItem(item)"
                    v-if="hasRole('delete.single')"
                    :icon="Delete"
+                   :disabled="loading"
                    size="small"
                    type="danger"
                    class="chat-list__chat-history-list__config__button"
@@ -145,7 +148,7 @@ async function loadMore() {
 <style lang="less" scoped>
 .chat-list {
   width: 300px;
-  height: 100%;
+  height: calc(100% - 20px);
   flex-shrink: 0;
   padding: 20px 20px 0 20px;
   border-right: 1px solid #E2E8F0;
@@ -160,8 +163,10 @@ async function loadMore() {
     &__new-chat {
       width: 120px;
       flex-grow: 1;
-      color: #3370ff;
       box-shadow: rgba(19, 51, 107, 0.08) 0 0 1px 0, rgba(19, 51, 107, 0.05) 0 1px 2px 0;
+      &:not(.is-disabled) {
+        color: #3370ff;
+      }
     }
   }
   .chakra-icon {

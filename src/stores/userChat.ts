@@ -178,7 +178,7 @@ const appConfig = reactive<AppConfigType>({
   baseURL: '',
 })
 
-const pageConfig = reactive(PAGE_CONFIG_DEFAULT)
+const permissionConfig = reactive(PAGE_CONFIG_DEFAULT)
 
 export const useChatConfig = () => {
 
@@ -191,12 +191,12 @@ export const useChatConfig = () => {
   // 设置页面权限
   function setPageConfig(config: PageConfigType) {
     if (!config) return;
-    Object.assign(pageConfig, config)
+    Object.assign(permissionConfig, config)
   }
 
   // 判断是否有权限
   function hasRole(key: keyof PageConfigType) {
-    return pageConfig[key]
+    return permissionConfig[key]
   }
 
   function reset() {
@@ -207,7 +207,7 @@ export const useChatConfig = () => {
       customUid: '',
       baseURL: '',
     })
-    Object.assign(pageConfig, PAGE_CONFIG_DEFAULT)
+    Object.assign(permissionConfig, PAGE_CONFIG_DEFAULT)
   }
 
   return {

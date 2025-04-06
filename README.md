@@ -31,7 +31,7 @@ $ pnpm install @56jun/fe-chat
     customUid: '',
   }
   
-  const pageConfig = {
+  const permissionConfig = {
     ['delete.patch']: true,// 批量删除
     ['delete.single']: true,// 删除单条
     ['upload.file']: false,// 上传附件按钮
