@@ -49,7 +49,7 @@ function back() {
 
 <style lang="less" scoped>
 .layout-app {
-  height: calc(100vh - 32px);
+  height: 100%;
 }
 @media (max-width: 960px) {
   .layout-app {

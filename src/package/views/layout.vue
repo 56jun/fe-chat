@@ -80,6 +80,7 @@ onMounted(() => {
   flex-grow: 1;
   --font-base-size: 14px;
   font-size: var(--font-base-size);
+  box-sizing: border-box;
 }
 .chat-wrapper {
   width: 100%;

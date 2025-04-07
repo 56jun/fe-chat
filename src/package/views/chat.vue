@@ -606,8 +606,6 @@ onUnmounted(() => {
 
 <style scoped lang="less">
 @fontFamily: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-
-
 .deepseek {
   height: 100%;
   display: flex;
@@ -650,7 +648,6 @@ onUnmounted(() => {
   }
 
   .answer-box {
-    width: calc(100% - 20px);
     padding: 10px;
     overflow: auto;
     position: unset;

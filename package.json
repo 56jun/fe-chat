@@ -1,6 +1,6 @@
 {
   "name": "@56jun/fe-chat",
-  "version": "1.0.0-beta.7",
+  "version": "1.0.0-beta.13",
   "type": "module",
   "scripts": {
     "dev": "vite",

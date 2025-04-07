@@ -79,8 +79,8 @@
           </span>
         </div>
       </div>
+      <el-icon @click="copyText" class="bottom-copy-btn" title="复制"><CopyDocument /></el-icon>
     </div>
-    <el-icon @click="copyText" class="bottom-copy-btn" title="复制"><CopyDocument /></el-icon>
   </div>
 </template>
 
@@ -276,8 +276,8 @@ const open = (): Promise<string | false> => {
   }
   .bottom-copy-btn {
     position: absolute;
-    right: -10px;
-    bottom: 15px;
+    right: -25px;
+    bottom: 0;
     font-size: 18px;
     cursor: pointer;
     display: none;

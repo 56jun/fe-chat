@@ -80,7 +80,7 @@ function copyText(text: string | undefined) {
 
 <style scoped lang="less">
 .chat-question {
-  width: calc(100% - 32px);
+  //width: calc(100% - 25px);
   padding: 12px 20px 12px 12px;
   &__wrapper {
     flex-direction: column;
