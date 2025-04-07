@@ -2,7 +2,11 @@ import axios from 'axios';
 
 import { useChatConfig } from "@/stores/userChat.ts";
 
-
+type CommonResponseType = Promise<false | {
+  code: number
+  msg: string
+  data: any
+}>
 
 
 function getHeader() {
@@ -37,7 +41,7 @@ export async function uploadFile(formData: FormData): Promise<{ data: { yswjmc: 
   })
 }
 
-export async function getChatInitWelcome(chatId: string) {
+export async function getChatInitWelcome(chatId: string): CommonResponseType {
   return new Promise((resolve) => {
     const { appConfig } = useChatConfig()
     axios.get(appConfig.baseURL + `/api/core/chat/init?appId=${appConfig.appId}&chatId=${chatId}`, { headers: getHeader() }).then((response) => {
@@ -53,7 +57,7 @@ export async function getChatInitWelcome(chatId: string) {
   })
 }
 
-export async function getHistories(data: Object) {
+export async function getHistories(data: Object): CommonResponseType {
   return new Promise((resolve) => {
     const { appConfig } = useChatConfig()
     axios.post(appConfig.baseURL + '/api/core/chat/getHistories', data, { headers: getHeader() }).then((response) => {
@@ -75,7 +79,7 @@ export async function getPaginationRecords(data: {
   "pageSize": number,
   "appId": string,
   "chatId": string,
-}) {
+}): CommonResponseType {
   return new Promise((resolve) => {
     const { appConfig } = useChatConfig()
     axios.post(appConfig.baseURL + '/api/core/chat/getPaginationRecords', data, { headers: getHeader() }).then((response) => {
@@ -92,7 +96,7 @@ export async function getPaginationRecords(data: {
 }
 
 // 修改对话标题
-export async function updateHistory(data: Object) {
+export async function updateHistory(data: Object): CommonResponseType {
   return new Promise((resolve) => {
     const { appConfig } = useChatConfig()
     axios.post(appConfig.baseURL + '/api/core/chat/getHistories', data, { headers: getHeader() }).then((response) => {
@@ -117,7 +121,7 @@ export async function updateUserFeedback(data: {
   userGoodFeedback?: string
   // 取消踩时不填此参数
   userBadFeedback?: string
-}) {
+}): CommonResponseType {
   return new Promise((resolve) => {
     const { appConfig } = useChatConfig()
     axios.post(appConfig.baseURL + '/api/core/chat/feedback/updateUserFeedback', data, { headers: getHeader() }).then((response) => {
@@ -134,7 +138,7 @@ export async function updateUserFeedback(data: {
 }
 
 // 删除当前对话
-export async function delHistory(chatId: string) {
+export async function delHistory(chatId: string): CommonResponseType {
   return new Promise((resolve) => {
     const { appConfig } = useChatConfig()
     axios.delete(appConfig.baseURL + `/api/core/chat/delHistory?appId=${appConfig.appId}&chatId=${chatId}`, { headers: getHeader() }).then((response) => {
@@ -151,7 +155,7 @@ export async function delHistory(chatId: string) {
 }
 
 // 清空历史记录
-export async function clearHistories() {
+export async function clearHistories(): CommonResponseType {
   return new Promise((resolve) => {
     const { appConfig } = useChatConfig()
     axios.delete(appConfig.baseURL + `/api/core/chat/clearHistories?appId=${appConfig.appId}`, { headers: getHeader() }).then((response) => {
@@ -168,7 +172,7 @@ export async function clearHistories() {
 }
 
 // 删除对话记录
-export async function deleteHistories(chatId: string, contentId: string) {
+export async function deleteHistories(chatId: string, contentId: string): CommonResponseType {
   return new Promise((resolve) => {
     const { appConfig } = useChatConfig()
     axios.delete(appConfig.baseURL + `/api/core/chat/item/delete?contentId=${contentId}&chatId=${chatId}&appId=${appConfig.appId}`, { headers: getHeader() }).then((response) => {

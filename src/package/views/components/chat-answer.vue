@@ -2,7 +2,7 @@
   <div class="answer-content__assistant">
     <div class="flex align-center">
       <img src="../../../assets/robot-icon.png" class="robot-bg chat-avatar" alt="icon" />
-      <div v-if="['connecting', 'preThinking', 'outputting'].includes(item.progress)"
+      <div v-if="isAnsweringItem"
            style="display: flex; justify-content: flex-start; align-items: center;margin-left: 10px;color: #4A7AEB;font-weight: bold;"
       >
         <el-icon class="is-loading" style="font-size: 22px">
@@ -11,28 +11,32 @@
         <span>&nbsp;{{ item.responseText || '思考中' }}...</span>
       </div>
       <ul v-else class="chat-reset-style chat__config-bar">
-        <li><el-icon @click="copyText" title="复制" size="16"><CopyDocument /></el-icon></li>
+        <li v-if="item.type !== 'welcome'">
+          <simple-tooltip content="复制">
+            <el-icon @click="copyText()"><CopyDocument /></el-icon>
+          </simple-tooltip>
+        </li>
         <!--    点赞 -->
         <li @click="likeOrDislike('Y')"
-            v-if="!item.userBadFeedback && item.type !== 'welcome'"
+            v-if="hasRole('chat:like') && !item.userBadFeedback && item.type !== 'welcome'"
             class="success"
-            :disabled="loading"
             :class="{ 'active': item.userGoodFeedback }"
+            :style="{ cursor: loading ? 'progress' : 'pointer' }"
         >
           <!--<LikeSvgIcon />-->
-          <svg-icon icon-class="like" font-size="18"></svg-icon>
+          <svg-icon icon-class="like"></svg-icon>
         </li>
         <!--    点踩    -->
         <li @click="likeOrDislike('N')"
-            v-if="!item.userGoodFeedback && item.type !== 'welcome'"
+            v-if="hasRole('chat:dislike') && !item.userGoodFeedback && item.type !== 'welcome'"
             class="danger"
-            :disabled="loading"
             :class="{ 'active': item.userBadFeedback }"
+            :style="{ cursor: loading ? 'progress' : 'pointer' }"
         >
-          <svg-icon icon-class="like" font-size="18" style="transform: rotateX(180deg)"></svg-icon>
+          <svg-icon icon-class="like" style="transform: rotateX(180deg)"></svg-icon>
         </li>
       </ul>
-      <div v-if="item.type !== 'welcome'" class="timer">{{ formatTime2shortText(item.time) }}</div>
+      <div v-if="item.type !== 'welcome' && !isAnsweringItem" class="timer">{{ timer }}</div>
     </div>
     <div v-if="!['connecting', 'preThinking'].includes(item.progress)" class="answer-item">
       <div v-for="(responseItem, responseIndex) in item.value" :key="`${responseIndex}`">
@@ -89,6 +93,7 @@ import SvgIcon from "@/components/SvgIcon/index.vue";
 import { updateUserFeedback } from "@/api/api.ts";
 import { formatTime2shortText, copyDomText } from "@/utils/index.ts";
 import { useChatConfig, useChat } from "@/stores/userChat.ts";
+import SimpleTooltip from '@/package/views/components/simple-tooltip.vue'
 
 const props = defineProps<{
   item: ChatType.ChatMessageType
@@ -96,7 +101,15 @@ const props = defineProps<{
 
 const { loading, activeChatId, setLoading } = useChat()
 
-const { appConfig } = useChatConfig()
+const isAnsweringItem = computed(() => {
+  return ['connecting', 'preThinking', 'outputting'].includes(props.item.progress)
+})
+
+const timer = computed(() => {
+  return formatTime2shortText(props.item.time)
+})
+
+const { appConfig, hasRole } = useChatConfig()
 const emits = defineEmits(['updateFeedback'])
 
 function copyText() {
@@ -140,7 +153,7 @@ async function likeOrDislike(type: 'Y' | 'N') {
   const result = await updateUserFeedback(params)
   setLoading(false)
   if (!result) return;
-  emits('updateFeedback')
+  emits('updateFeedback', params)
 }
 
 const open = (): Promise<string | false> => {
@@ -175,7 +188,7 @@ const open = (): Promise<string | false> => {
     height: 28px;
   }
   .answer-item {
-    width: 100%;
+    //width: 100%;
     min-height: 20px;
     padding: 12px 12px 0;
     margin-top: 10px;
@@ -312,7 +325,8 @@ const open = (): Promise<string | false> => {
 <style lang="less" scoped>
 @media (max-width: 960px) {
   .answer-content__assistant {
-    .answer-item {
+    .bottom-copy-btn {
+      display: initial;
     }
   }
 }

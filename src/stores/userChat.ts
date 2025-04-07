@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { clearHistories, getHistories, getPaginationRecords, deleteHistories } from '@/api/api.ts'
 import { type ChatType } from "@/type/chat.ts"
 import moment from "moment";
@@ -15,6 +15,10 @@ const pageInfo = reactive({
   offset: 0,
   pageSize: 999,
   total: 0,
+})
+const isAnswering = computed(() => {
+  const lastProgress = message.value[message.value.length - 1]?.progress || 'init'
+  return ['connecting', 'preThinking', 'outputting'].includes(lastProgress)
 })
 
 export interface UseChatResponse {
@@ -125,21 +129,34 @@ export const useChat = () => {
     setActiveChatId(chatId)
   }
 
-  // todo
-  async function deleteChat(item: ChatType.HistoryChatMessageType) {
-    const index = message.value.findIndex(chat => chat.chatId === item.chatId)
-    if (index < 0) return;
-    message.value.splice(index, 1)
-    if (activeChatId.value === item.chatId) {
-      activeChatId.value = ''
-      message.value = []
-    }
-    await deleteHistories(item.chatId, item.dataId)
+  // 删除一组问答
+  function deleteChatDataItem(item: ChatType.ChatMessageType): Promise<boolean> {
+    return new Promise(async (resolve) => {
+      const index = message.value.findIndex(chat => chat.dataId === item.dataId)
+      if (index < 0) return;
+      setLoading(true)
+      try {
+        for (let i = index + 1; i > index - 1; i--) {
+          const dataId = message.value[i].dataId
+          if (!dataId) continue;
+          const result = await deleteHistories(activeChatId.value, dataId)
+          if (result && result.code === 200) {
+            message.value.splice(i, 1)
+          }
+        }
+        setLoading(false)
+        resolve(true)
+      } catch(e) {
+        setLoading(false)
+        console.error(e)
+        resolve(false)
+      }
+    })
   }
 
 
   // todo
-  function reAsk(item: ChatType.ChatMessageType) {
+  function reAskQuestion(item: ChatType.ChatMessageType) {
     const chatIndex = message.value.findIndex(chat => chat.id === item.id)
     if (chatIndex < 0) return;
     const chatItem = message.value[chatIndex]
@@ -163,6 +180,7 @@ export const useChat = () => {
 
   return {
     loading,
+    isAnswering,
     activeChatId,
     currentChatTitle,
     pageInfo,
@@ -172,7 +190,8 @@ export const useChat = () => {
     setActiveChatId,
     clearChatHistory,
     reset,
-    reAsk,
+    reAskQuestion,
+    deleteChatDataItem,
     updateNewQuestion,
     newChat,
     getChatList,
@@ -189,9 +208,12 @@ export type AppConfigType = {
 }
 
 export const PAGE_CONFIG_DEFAULT = {
-  ['delete.patch']: true,// 批量删除
-  ['delete.single']: true,// 删除单条
-  ['upload.file']: false,// 上传附件按钮
+  ['delete:patch']: true,// 批量删除
+  ['delete:single']: true,// 删除单条
+  ['chat:regenerate']: true,// 重新问答
+  ['chat:like']: true,// 重新问答
+  ['chat:dislike']: true,// 重新问答
+  ['upload:file']: true,// 上传附件按钮
 }
 
 export type PageConfigType = {

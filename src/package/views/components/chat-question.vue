@@ -4,15 +4,19 @@
     <div class="chat-question__user-avatar-wrapper">
       <ul class="chat-reset-style chat__config-bar">
         <li>
-          <simple-tooltip content="重新生成">
+          <simple-tooltip content="复制">
             <el-icon @click="copyText(getQuestionText(item))" title="复制"><CopyDocument /></el-icon>
           </simple-tooltip>
         </li>
-        <li>
-          <simple-tooltip @click="reAsk(item)" content="重新生成"><el-icon><Refresh /></el-icon></simple-tooltip>
+        <li v-if="!isAnswering && hasRole('chat:regenerate')">
+          <simple-tooltip content="重新生成">
+            <el-icon @click="reAsk(item)"><Refresh /></el-icon>
+          </simple-tooltip>
         </li>
-        <li>
-          <simple-tooltip content="删除"><el-icon><Delete /></el-icon></simple-tooltip>
+        <li v-if="!isAnswering && hasRole('delete:single')">
+          <simple-tooltip content="删除">
+            <el-icon @click="deleteChatDataItem(item)"><Delete /></el-icon>
+          </simple-tooltip>
         </li>
       </ul>
       <el-icon class="avatar chat-avatar"><Avatar /></el-icon>
@@ -40,21 +44,31 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, defineEmits } from 'vue'
+import { defineProps, ref, defineEmits, computed } from 'vue'
 import FileIcon from '@/package/views/file-icon.vue'
 import { copyDomText, getSuffix } from '@/utils'
 import { ElMessage } from 'element-plus'
 import type { ChatType } from '@/type/chat.ts'
-import { useChat } from "@/stores/userChat.ts";
+import { useChat, useChatConfig } from '@/stores/userChat.ts'
 import SimpleTooltip from '@/package/views/components/simple-tooltip.vue'
 
 const props = defineProps<{
   item: ChatType.ChatMessageType
 }>()
 
-const emits = defineEmits(['reAsk'])
+const emits = defineEmits(['handleReAskQuestion', 'handleDelete'])
 
-const { getQuestionText, reAsk } = useChat()
+const { getQuestionText, isAnswering } = useChat()
+
+const { hasRole } = useChatConfig()
+
+function reAsk(item: ChatType.ChatMessageType) {
+  emits('handleReAskQuestion', item)
+}
+
+function deleteChatDataItem(item: ChatType.ChatMessageType) {
+  emits('handleDelete', item)
+}
 
 function copyText(text: string | undefined) {
   if (!text) return
@@ -66,12 +80,12 @@ function copyText(text: string | undefined) {
 
 <style scoped lang="less">
 .chat-question {
-  width: 100%;
+  width: calc(100% - 32px);
+  padding: 12px 20px 12px 12px;
   &__wrapper {
     flex-direction: column;
     justify-content: flex-end;
     align-items: end;
-    margin-right: 10px;
     margin-bottom: 10px;
   }
   &__user-avatar-wrapper {

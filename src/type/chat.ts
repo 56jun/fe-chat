@@ -28,6 +28,9 @@ export namespace ChatType {
   // 展示的消息
   export type ChatMessageType = {
     role: 'user'
+    dataId: string
+    time: string
+    responseChatItemId?: string
     content: { type: string; name: string; url: string, text?: string }[] | string
     // waiting|preThinking|outputting|done
     progress: 'init' | 'connecting' | 'preThinking' | 'outputting' | 'done'
@@ -36,6 +39,8 @@ export namespace ChatType {
     role: 'assistant'
     // waiting|preThinking|outputting|done
     progress: 'init' | 'connecting' | 'preThinking' | 'outputting' | 'done'
+    dataId: string
+    time: string
     userGoodFeedback?: string | undefined
     userBadFeedback?: string | undefined
     // 模型返回列表

@@ -31,11 +31,13 @@
           <!--问题-->
           <ChatQuestion v-if="item.role === 'user'"
                         :item="item"
+                        @handle-re-ask-question="handleReAskQuestion"
+                        @handle-delete="handleDelete"
           />
           <!--回答-->
           <ChatAnswer v-if="item.role === 'assistant'"
                       :item="item"
-                      @updateFeedback="getMessage(activeChatId)"
+                      @updateFeedback="(params) => updateFeedback(item, params)"
           />
         </template>
       </div>
@@ -58,7 +60,7 @@
                   v-model="form.question"
                   placeholder="输入您想问的问题"
                   class="textarea"
-                  :class="{ 'no-upload': !hasRole('upload.file') }"
+                  :class="{ 'no-upload': !hasRole('upload:file') }"
                   maxlength="10000"
                   resize="none"
                   autoHeight border="none"
@@ -68,7 +70,7 @@
                   @compositionend="() => compositionInputStatus = false"
                   @keydown.enter.stop="keyDownEnter"
         ></el-input>
-        <div v-if="hasRole('upload.file')" class="upload-button">
+        <div v-if="hasRole('upload:file')" class="upload-button">
           <el-upload
             action="#"
             class="upload-demo"
@@ -92,7 +94,7 @@
                :src="stopSvg"
                alt=""
           >
-          <img v-show="progressGlobal === 'done'" @click="sendMessageChat" class="send-button--send"
+          <img v-show="progressGlobal === 'done'" @click="sendMessageChat()" class="send-button--send"
                :src="sendImg" alt=""
           >
         </div>
@@ -126,7 +128,7 @@ import ChatList from '@/package/views/chat-list.vue'
 import FileIcon from './file-icon.vue'
 import { marked } from 'marked'
 import ChatAnswer from './components/chat-answer.vue'
-import { getSuffix } from '@/utils/index.ts'
+import { getSuffix, guid } from '@/utils/index.ts'
 import { getChatApi, getChatInitWelcome, getPaginationRecords, uploadFile } from '@/api/api'
 
 import sendImg from '@/assets/send.png'
@@ -153,7 +155,17 @@ const showBack = computed(() => props.showBack)
 
 const emits = defineEmits(['back'])
 
-const { loading, activeChatId, message, setLoading, updateNewQuestion, newChat, currentChatTitle } = useChat()
+const {
+  loading,
+  activeChatId,
+  message,
+  setLoading,
+  updateNewQuestion,
+  newChat,
+  currentChatTitle,
+  reAskQuestion,
+  deleteChatDataItem
+} = useChat()
 
 const needUpdateParentChatListTitle = ref(false)
 
@@ -198,14 +210,25 @@ function keyDownEnter(event: Event | KeyboardEvent) {
   sendMessageChat()
 }
 
-async function sendMessageChat() {
-  if (loadingChat.value || loading.value || !form.question || ['preThinking', 'outputting'].includes(progressGlobal.value)) {
+async function sendMessageChat(defaultQuestionItem: ChatType.ChatMessageType | null = null) {
+  if (
+    loadingChat.value || loading.value
+    || (!form.question && !defaultQuestionItem)
+    || ['preThinking', 'outputting'].includes(progressGlobal.value)
+  ) {
     return false
   }
+  let [dataId, responseChatItemId] = [guid(), guid()]
 
+  // const units = form.question.split('\t')
+  // if (units.length !== 3) return ElMessage.warning('请按照格式输入：问题\t参数1\t参数2')
+  // const [projectId, name, xydm] = units.map(item => item.trim())
   let messageItem: ChatType.ChatMessageType = {
+    time: new Date().toISOString(),
     role: 'user',
+    dataId,
     content: form.question,
+    // content: xydm,
     progress: 'init'
   }
   if (fileList.value.length > 0) {
@@ -213,7 +236,9 @@ async function sendMessageChat() {
       return { type: 'file_url', name: x.name, url: x.url }
     })
     messageItem = {
+      time: new Date().toISOString(),
       role: 'user',
+      dataId,
       content: [
         ...fileMessageList,
         { type: 'text', text: form.question }
@@ -221,9 +246,16 @@ async function sendMessageChat() {
     } as ChatType.ChatMessageType
     fileList.value = []
   }
+  if (defaultQuestionItem) {
+    const { responseChatItemId: responseDataId, ...question } = defaultQuestionItem
+    messageItem = { ...question } as ChatType.ChatMessageType
+    responseChatItemId = responseDataId
+  }
   message.value.push(messageItem)
   const params = {
     chatId: activeChatId.value,
+    responseChatItemId,
+    // chatId: projectId,
     customUid: appConfig.customUid,// 自定义的用户 ID。在历史记录中，该条记录的使用者会显示为 xxxxxx
     // 替换为实际的请求参数
     // prompt: this.form.question,
@@ -241,6 +273,8 @@ async function sendMessageChat() {
       role: 'assistant',
       progress: 'connecting',
       responseText: '连接中',
+      dataId: responseChatItemId,
+      time: new Date().toISOString(),
       value: []
     })
     loadingChat.value = true
@@ -278,6 +312,7 @@ async function sendMessageChat() {
 }
 
 let lastValidResponseType = ''
+
 function onMessage(msg: ChatType.ResponseQueueItemType) {
   const lastItem: ChatType.ChatMessageType = message.value[message.value.length - 1]
 
@@ -407,6 +442,25 @@ const scrollToBottom = () => {
   }
 }
 
+function updateFeedback(item: ChatType.ChatMessageType, params: {
+  appId: string
+  chatId: string
+  dataId: string
+  // 取消点赞时不填此参数
+  userGoodFeedback?: string
+  // 取消踩时不填此参数
+  userBadFeedback?: string
+}) {
+  Reflect.deleteProperty(item, 'userGoodFeedback');
+  Reflect.deleteProperty(item, 'userBadFeedback');
+  if (params.userGoodFeedback) {
+    item.userGoodFeedback = params.userGoodFeedback
+  }
+  if (params.userBadFeedback) {
+    item.userBadFeedback = params.userBadFeedback
+  }
+}
+
 const requestLoading = ref(false)
 
 async function getMessage(chatId: string) {
@@ -443,7 +497,9 @@ async function getMessage(chatId: string) {
       return resultItem
     } else {
       return {
+        ...item,
         role: 'user',
+        dataId: item.dataId,
         content: item.value.map((x: any) => {
           if (x.type === 'text') {
             return {
@@ -465,14 +521,16 @@ async function getMessage(chatId: string) {
   if (message.value.length === 0) {
     setLoading(true)
     const result: any = await getChatInitWelcome(chatId)
-    setLoading(true)
+    setLoading(false)
     if (result) {
       const welcomeText = result?.data?.app?.chatConfig?.welcomeText || ''
       if (welcomeText) {
         message.value.push({
+          dataId: 'welcomeText',
           role: 'assistant',
           progress: 'done',
           responseText: '',
+          time: new Date().toISOString(),
           type: 'welcome',
           value: [{
             type: 'text',
@@ -490,6 +548,34 @@ async function getMessage(chatId: string) {
   nextTick(() => {
     userInput.value?.focus()
   })
+}
+
+async function handleReAskQuestion(item: ChatType.ChatMessageType) {
+  const index = message.value.findIndex((x: any) => x.dataId === item.dataId)
+  if (index < 0) return;
+  // 先删除用户问答
+  for (let i = message.value.length - 1; i > index - 1; i--) {
+    if (message.value[i].role === 'user') {
+      await handleDelete(message.value[i])
+    }
+  }
+  // 再添加一个新的问答
+  await sendMessageChat({
+    role: 'user',
+    dataId: guid(),
+    responseChatItemId: guid(),
+    time: new Date().toISOString(),
+    content: JSON.parse(JSON.stringify(item.content)),
+    progress: 'init'
+  })
+}
+
+function handleDelete(item: ChatType.ChatMessageType) {
+  try {
+    return deleteChatDataItem(item)
+  } catch (e) {
+    console.error(e)
+  }
 }
 
 watch(() => activeChatId?.value, (chatId) => {
@@ -564,7 +650,8 @@ onUnmounted(() => {
   }
 
   .answer-box {
-    padding: 10px 0 0 10px;
+    width: calc(100% - 20px);
+    padding: 10px;
     overflow: auto;
     position: unset;
     height: 0;
@@ -793,7 +880,7 @@ onUnmounted(() => {
     }
     .input-area {
       //width: var(--chat-input-width);
-      width: 100%;
+      width: calc(100% - 40px);
       margin: 0;
       padding: 5px 20px 30px 20px;
       max-width: unset;

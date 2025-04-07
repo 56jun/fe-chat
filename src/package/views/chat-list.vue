@@ -14,7 +14,7 @@
         round
       >新对话
       </el-button>
-      <el-popconfirm @confirm="clearChatList" v-if="hasRole('delete.patch')" width="220"
+      <el-popconfirm @confirm="clearChatList" v-if="hasRole('delete:patch')" width="220"
                      title="确认删除所有聊天记录？" confirm-button-text="确认"
                      cancel-button-text="取消"
       >
@@ -47,7 +47,7 @@
           {{formatTime2shortText(item.updateTime)}}
         </span>
         <el-button @click.stop="removeChatItem(item)"
-                   v-if="hasRole('delete.single')"
+                   v-if="hasRole('delete:single')"
                    :icon="Delete"
                    :disabled="loading"
                    size="small"
@@ -221,10 +221,11 @@ async function loadMore() {
       padding-left: 10px;
     }
     &__time {
-      width: 60px;
+      width: 50px;
       flex-shrink: 0;
       flex-grow: 0;
       transition: all .3s;
+      text-align: right;
     }
     &__config {
       list-style: none;

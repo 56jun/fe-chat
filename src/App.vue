@@ -3,7 +3,7 @@
           :app-config="appConfig"
           :permission-config="permission"
           @back="back"
-          style="height: calc(100vh - 80px);"
+          class="layout-app"
   />
 </template>
 
@@ -48,4 +48,12 @@ function back() {
 </script>
 
 <style lang="less" scoped>
+.layout-app {
+  height: calc(100vh - 32px);
+}
+@media (max-width: 960px) {
+  .layout-app {
+    height: 100vh;
+  }
+}
 </style>
