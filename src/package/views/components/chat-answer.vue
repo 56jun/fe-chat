@@ -1,7 +1,7 @@
 <template>
   <div class="answer-content__assistant">
     <div class="flex align-center">
-      <img src="../../../assets/robot-icon.png" class="robot-bg" alt="icon" />
+      <img src="../../../assets/robot-icon.png" class="robot-bg chat-avatar" alt="icon" />
       <div v-if="['connecting', 'preThinking', 'outputting'].includes(item.progress)"
            style="display: flex; justify-content: flex-start; align-items: center;margin-left: 10px;color: #4A7AEB;font-weight: bold;"
       >
@@ -10,7 +10,7 @@
         </el-icon>
         <span>&nbsp;{{ item.responseText || '思考中' }}...</span>
       </div>
-      <ul v-else class="reset-style chat__config-bar">
+      <ul v-else class="chat-reset-style chat__config-bar">
         <li><el-icon @click="copyText" title="复制" size="16"><CopyDocument /></el-icon></li>
         <!--    点赞 -->
         <li @click="likeOrDislike('Y')"
@@ -171,9 +171,8 @@ const open = (): Promise<string | false> => {
   margin-left: 7px;
   margin-bottom: 10px;
   .robot-bg {
-    width: 33px;
-    height: 33px;
-    min-width: 33px;
+    width: 28px;
+    height: 28px;
   }
   .answer-item {
     width: 100%;

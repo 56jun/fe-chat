@@ -2,10 +2,20 @@
 <div v-if="item.role === 'user'" class="chat-question">
   <div class="flex chat-question__wrapper">
     <div class="chat-question__user-avatar-wrapper">
-      <ul class="reset-style chat__config-bar">
-        <li><el-icon @click="copyText(getQuestionText(item))" title="复制"><CopyDocument /></el-icon></li>
+      <ul class="chat-reset-style chat__config-bar">
+        <li>
+          <simple-tooltip content="重新生成">
+            <el-icon @click="copyText(getQuestionText(item))" title="复制"><CopyDocument /></el-icon>
+          </simple-tooltip>
+        </li>
+        <li>
+          <simple-tooltip @click="reAsk(item)" content="重新生成"><el-icon><Refresh /></el-icon></simple-tooltip>
+        </li>
+        <li>
+          <simple-tooltip content="删除"><el-icon><Delete /></el-icon></simple-tooltip>
+        </li>
       </ul>
-      <el-icon class="avatar"><Avatar /></el-icon>
+      <el-icon class="avatar chat-avatar"><Avatar /></el-icon>
     </div>
     <!--智能问答-->
     <div v-if="Array.isArray(item.content)" class="question-item">
@@ -30,18 +40,21 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref } from 'vue'
+import { defineProps, ref, defineEmits } from 'vue'
 import FileIcon from '@/package/views/file-icon.vue'
 import { copyDomText, getSuffix } from '@/utils'
 import { ElMessage } from 'element-plus'
 import type { ChatType } from '@/type/chat.ts'
 import { useChat } from "@/stores/userChat.ts";
+import SimpleTooltip from '@/package/views/components/simple-tooltip.vue'
 
 const props = defineProps<{
   item: ChatType.ChatMessageType
 }>()
 
-const { getQuestionText } = useChat()
+const emits = defineEmits(['reAsk'])
+
+const { getQuestionText, reAsk } = useChat()
 
 function copyText(text: string | undefined) {
   if (!text) return
@@ -67,8 +80,8 @@ function copyText(text: string | undefined) {
     align-items: center;
     margin-bottom: 5px;
     .avatar {
-      width: 34px;
-      height: 34px;
+      width: 28px;
+      height: 28px;
       background-color: rgb(138 149 167);
       color: white;
       font-size: 18px;

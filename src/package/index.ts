@@ -14,7 +14,6 @@ import '@/package/assets/css/main.less'
 import '@/package/assets/css/markdown.css'
 import '@/package/assets/css/chat.less'
 
-import pinia from '@/store/index.ts'  //新增代码
 import { streamFetch } from '@/utils/chat-fetch.ts'
 export * from '@/stores/userChat.ts'
 
@@ -27,7 +26,6 @@ function install(app: App) {
   app.component('Chat', Chat);
   app.component('ChatList', ChatList);
   app.component('svg-icon', SvgIcon)
-  app.use(pinia)
 }
 
 export {

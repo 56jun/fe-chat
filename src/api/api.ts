@@ -167,3 +167,20 @@ export async function clearHistories() {
   })
 }
 
+// 删除对话记录
+export async function deleteHistories(chatId: string, contentId: string) {
+  return new Promise((resolve) => {
+    const { appConfig } = useChatConfig()
+    axios.delete(appConfig.baseURL + `/api/core/chat/item/delete?contentId=${contentId}&chatId=${chatId}&appId=${appConfig.appId}`, { headers: getHeader() }).then((response) => {
+      if (response.data.code === 200) {
+        resolve(response.data)
+      } else {
+        resolve(false)
+      }
+    }).catch(err => {
+      console.error(err)
+      resolve(false)
+    })
+  })
+}
+

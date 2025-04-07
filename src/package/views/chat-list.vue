@@ -32,7 +32,7 @@
       </el-popconfirm>
     </div>
     <ul ref="appListRef"
-        class="reset-style chat-list__chat-history-list"
+        class="chat-reset-style chat-list__chat-history-list"
         :class="{ 'no-more': infiniteScrollDisabled }"
     >
       <li v-for="(item, historyIndex) in history" :key="item.chatId" @click="changeChat(item)"
@@ -93,7 +93,7 @@ const { arrivedState } = useScroll(appListRef)
 
 watch(() => arrivedState.bottom, (value) => {
   if (value) {
-    loadMore()
+    // loadMore()
   }
 })
 

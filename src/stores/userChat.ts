@@ -1,6 +1,5 @@
 import { ref, reactive } from 'vue'
-import { ElMessage } from 'element-plus'
-import { clearHistories, getHistories, getPaginationRecords } from '@/api/api.ts'
+import { clearHistories, getHistories, getPaginationRecords, deleteHistories } from '@/api/api.ts'
 import { type ChatType } from "@/type/chat.ts"
 import moment from "moment";
 import { guid } from "@/utils";
@@ -14,7 +13,7 @@ const currentChatTitle = ref<string>('')
 const pageInfo = reactive({
   page: 1,
   offset: 0,
-  pageSize: 20,
+  pageSize: 999,
   total: 0,
 })
 
@@ -74,13 +73,6 @@ export const useChat = () => {
     const res = await clearHistories()
     setLoading(false)
     if (!res) return;
-    ElMessage.success('操作成功')
-    history.value = []
-    message.value = []
-  }
-
-  function reset() {
-    activeChatId.value = ''
     history.value = []
     message.value = []
   }
@@ -133,6 +125,42 @@ export const useChat = () => {
     setActiveChatId(chatId)
   }
 
+  // todo
+  async function deleteChat(item: ChatType.HistoryChatMessageType) {
+    const index = message.value.findIndex(chat => chat.chatId === item.chatId)
+    if (index < 0) return;
+    message.value.splice(index, 1)
+    if (activeChatId.value === item.chatId) {
+      activeChatId.value = ''
+      message.value = []
+    }
+    await deleteHistories(item.chatId, item.dataId)
+  }
+
+
+  // todo
+  function reAsk(item: ChatType.ChatMessageType) {
+    const chatIndex = message.value.findIndex(chat => chat.id === item.id)
+    if (chatIndex < 0) return;
+    const chatItem = message.value[chatIndex]
+    const text = getQuestionText(item)
+    if (!text) return;
+    // chat.title = text
+    // currentChatTitle.value = text
+  }
+
+  function reset() {
+    activeChatId.value = ''
+    history.value = []
+    message.value = []
+    Object.assign(pageInfo, {
+      page: 1,
+      offset: 0,
+      pageSize: 20,
+      total: 0,
+    })
+  }
+
   return {
     loading,
     activeChatId,
@@ -144,6 +172,7 @@ export const useChat = () => {
     setActiveChatId,
     clearChatHistory,
     reset,
+    reAsk,
     updateNewQuestion,
     newChat,
     getChatList,
