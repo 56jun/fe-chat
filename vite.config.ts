@@ -10,10 +10,31 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import createSvgIcon from './vite/plugins/svg-icon'
 
 // https://vite.dev/config/
-export default defineConfig(({ mode, command }) => {
+export default defineConfig((config) => {
+  console.log('config', config)
+  const { mode, command } = config
   const env = loadEnv(mode, process.cwd());
-  console.log('env.VITE_BASE_URL', env)
-
+  let build = {}
+  console.log('process.argv', process.argv)
+  if (process.argv.includes('package')) {
+    build = {
+      lib: {
+        entry: path.resolve(__dirname, 'src/package/index.ts'),
+        name: 'fe-chaaat',
+        fileName: (format: string) => `index.${format}.js`
+      },
+      rollupOptions: {
+        // 确保外部化处理那些你不想打包进库的依赖
+        external: ['vue'],
+        output: {
+          // 在 UMD 构建模式下为这些外部化的依赖提供一个全局变量
+          globals: {
+            vue: 'Vue'
+          }
+        },
+      }
+    }
+  }
   return {
     plugins: [
       vue(),
@@ -21,7 +42,7 @@ export default defineConfig(({ mode, command }) => {
       vueDevTools(),
       createSvgIcon(command === 'build'),
     ],
-    base: './',
+    base: env.VITE_BASE_CONTEXT,
     define: {
       'process.env': JSON.stringify(env),
     },
@@ -53,22 +74,6 @@ export default defineConfig(({ mode, command }) => {
         // '@': './src'
       },
     },
-    build: {
-      lib: {
-        entry: path.resolve(__dirname, 'src/package/index.ts'),
-        name: 'fe-chaaat',
-        fileName: (format) => `index.${format}.js`
-      },
-      rollupOptions: {
-        // 确保外部化处理那些你不想打包进库的依赖
-        external: ['vue'],
-        output: {
-          // 在 UMD 构建模式下为这些外部化的依赖提供一个全局变量
-          globals: {
-            vue: 'Vue'
-          }
-        },
-      }
-    }
+    build,
   }
 })

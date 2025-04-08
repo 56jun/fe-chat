@@ -24,7 +24,7 @@ const appConfig = reactive({
   'appId': '',
   'apiKey': '',
   customUid: 'SonFei_demo',
-  baseURL: '/deepseek'
+  baseURL: import.meta.env.VITE_BASE_URL
 })
 
 const permission = ref(PAGE_CONFIG_DEFAULT)

@@ -4,15 +4,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
+    "build": "run-p type-check && npm run build-web",
+    "build:web": "run-p type-check && vite build",
+    "build:package": "npm run type-check && npm run build-pack --target ./ ./src/package/index.ts package",
+    "build-pack": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix",
     "lint": "run-s lint:*",
-    "format": "prettier --write src/",
-    "package": "npm run type-check && npm run build --target ./ ./src/package/index.ts"
+    "format": "prettier --write src/"
   },
   "files": [
     "dist"
