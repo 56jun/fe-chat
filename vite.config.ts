@@ -48,7 +48,7 @@ export default defineConfig((config) => {
     },
     server: {
       host: true,
-      open: true,
+      open: false,
       proxy: {
         '/api': {
           target: 'http://218.22.24.55:10000/',
