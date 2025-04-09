@@ -649,7 +649,8 @@ onUnmounted(() => {
 
   .answer-box {
     padding: 10px;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     position: unset;
     height: 0;
     flex: 1 0 0;
