@@ -648,13 +648,15 @@ onUnmounted(() => {
   }
 
   .answer-box {
-    padding: 10px;
+    //padding: 10px;
     overflow-y: auto;
     overflow-x: hidden;
     position: unset;
-    height: 0;
-    flex: 1 0 0;
-
+    height: 100%;
+    .answer-content {
+      max-width: 92%;
+      margin-inline: auto;
+    }
     .robot-bg {
       width: 33px;
       height: 33px;
@@ -853,11 +855,15 @@ onUnmounted(() => {
 </style>
 <style lang="less" scoped>
 @media (min-width: 961px) {
+  .deepseek {
+    --avatar-size: 28px;
+  }
 }
 </style>
 <style lang="less" scoped>
 @media (max-width: 960px) {
   .deepseek {
+    --avatar-size: 22px;
     .chat-header {
       justify-content: space-between;
       &__record {

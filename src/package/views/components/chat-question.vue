@@ -81,7 +81,7 @@ function copyText(text: string | undefined) {
 <style scoped lang="less">
 .chat-question {
   //width: calc(100% - 25px);
-  padding: 12px 20px 12px 12px;
+  padding: 12px 0 12px;
   &__wrapper {
     flex-direction: column;
     justify-content: flex-end;
@@ -94,8 +94,8 @@ function copyText(text: string | undefined) {
     align-items: center;
     margin-bottom: 5px;
     .avatar {
-      width: 28px;
-      height: 28px;
+      width: var(--avatar-size);
+      height: var(--avatar-size);
       background-color: rgb(138 149 167);
       color: white;
       font-size: 18px;

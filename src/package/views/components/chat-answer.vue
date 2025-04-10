@@ -178,14 +178,10 @@ const open = (): Promise<string | false> => {
 <style scoped lang="less">
 .answer-content__assistant {
   position: relative;
-  width: var(--chat-answer-width);
-  max-width: calc(100% - 24px);
-  padding: 12px;
-  margin-left: 7px;
   margin-bottom: 10px;
   .robot-bg {
-    width: 28px;
-    height: 28px;
+    width: var(--avatar-size);
+    height: var(--avatar-size);
   }
   .answer-item {
     //width: 100%;
