@@ -14,9 +14,9 @@ import { useRouter } from 'vue-router'
 import { PAGE_CONFIG_DEFAULT } from '@/package/index.ts'
 
 const DEFAULT_APP = {
-  'appName': '高新知识库',
-  'appId': '67b03798c1e6e49ceb54805e',
-  'apiKey': 'fastgpt-zrLYExc7wjg3QWTntFN9qc669IvYgLBDN0w4p89PzD408PXz6JpGYN',
+  'appName': 'xx知识库',
+  'appId': 'xxxxxx',
+  'apiKey': 'fastgpt-xxxxxxx',
 }
 
 const appConfig = reactive({
