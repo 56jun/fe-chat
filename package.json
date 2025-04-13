@@ -1,7 +1,9 @@
 {
   "name": "@56jun/fe-chat",
-  "version": "1.0.0-beta.18",
+  "version": "1.0.0-beta.19",
   "type": "module",
+  "author": "56jun",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check && npm run build-web",
@@ -66,5 +68,17 @@
     "vite-plugin-vue-devtools": "^7.7.2",
     "vue-router": "^4.5.0",
     "vue-tsc": "^2.2.8"
-  }
+  },
+  "repository": {
+    "url": "https://github.com/56jun/fe-chat",
+    "directory": "libs/core",
+    "type": "git"
+  },
+  "keywords": [
+    "fastGPT",
+    "fe-chat",
+    "针对fastGPT的前端聊天组件",
+    "可配置"
+  ],
+  "description": "针对fastGPT的前端聊天组件，前端可配置"
 }

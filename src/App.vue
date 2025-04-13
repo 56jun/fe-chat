@@ -23,7 +23,7 @@ const appConfig = reactive({
   'appName': '',
   'appId': '',
   'apiKey': '',
-  customUid: 'SonFei_demo',
+  customUid: '56jun_demo',
   baseURL: import.meta.env.VITE_BASE_URL
 })
 

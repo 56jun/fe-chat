@@ -1,5 +1,5 @@
 ## 项目名称
-> gxsk-chat对话插件 
+> fe-chat对话插件 
 
 ## 插件使用说明
 
@@ -11,24 +11,30 @@ $ pnpm install @56jun/fe-chat
 ```vue
 <template>
   <Layout :app-config="appConfig"
-          :page-config="config"
+          :permission-config="permissionConfig"
           @back="back"
   />
   <Layout app-config="必填，app的配置项对象，格式为{appName: string, appId: string, apiKey: string}"
+          :permission-config="按钮及操作权限配置"
           @back="选填，展示返回按钮时，点击返回按钮触发的事件"
-          @gen-chat-id="选填，自定义生成chatId的方法，返回值为chatId"
   />  
 </template>
 <script>
-  // Layout组件为对话插件的主组件，通过useChat方法获取对话插件的相关方法
-  import { Layout, useChat } from 'fe-chaaat'
+  // 1、app入口文件main.ts配置
+  import * as FeChat from '@56jun/chat'
+  app.use(FeChat)
   
+  // 2、业务代码入口配置
+  // Layout组件为对话插件的主组件，通过useChat方法获取对话插件的相关方法
+  import { Layout, useChat } from '@56jun/fe-chat'
+  
+  // 均必传
   const appConfig = {
     appName: '',
     appId: '',
     apiKey: '',
     baseURL: '',// 接口上下文地址
-    customUid: '',
+    customUid: '',// 自定义用户ID信息
   }
   
   const permissionConfig = {
@@ -67,12 +73,12 @@ $ pnpm install @56jun/fe-chat
     message: ChatType.ChatMessageType[],
     pageInfo: { page: number; offset: number; pageSize: number; total: number }
     setLoading : (status: boolean) => void
-      setActiveChatId: (id: string) => void
-      clearChatHistory: () => Promise<void>
-      updateNewQuestion: (chatId: string) => void
-      newChat: (appConfig: { appId: string; appName: string; apiKey: string; baseURL: string }, force?: boolean) => Promise<void>
+    setActiveChatId: (id: string) => void
+    clearChatHistory: () => Promise<void>
+    updateNewQuestion: (chatId: string) => void
+    newChat: (appConfig: { appId: string; appName: string; apiKey: string; baseURL: string }, force?: boolean) => Promise<void>
     getChatList: () => Promise<void>
-      reset: () => void
+    reset: () => void
   }
   
   const {
