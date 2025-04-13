@@ -13,7 +13,7 @@
             <el-icon @click="reAsk(item)"><Refresh /></el-icon>
           </simple-tooltip>
         </li>
-        <li v-if="!isAnswering && hasRole('delete:single')">
+        <li v-if="!isAnswering && hasRole('delete:chat:content:item')">
           <simple-tooltip content="删除">
             <el-icon @click="deleteChatDataItem(item)"><Delete /></el-icon>
           </simple-tooltip>

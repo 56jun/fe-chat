@@ -13,7 +13,7 @@ const currentChatTitle = ref<string>('')
 const pageInfo = reactive({
   page: 1,
   offset: 0,
-  pageSize: 999,
+  pageSize: 20,
   total: 0,
 })
 const isAnswering = computed(() => {
@@ -208,12 +208,16 @@ export type AppConfigType = {
 }
 
 export const PAGE_CONFIG_DEFAULT = {
-  ['delete:patch']: true,// 批量删除
-  ['delete:single']: true,// 删除单条
-  ['chat:regenerate']: true,// 重新问答
-  ['chat:like']: true,// 重新问答
-  ['chat:dislike']: true,// 重新问答
-  ['upload:file']: true,// 上传附件按钮
+  ['chat:new']: false,// 新建对话
+  ['chat:welcome']: false,// 查看欢迎语
+  ['chat:history']: false,// 查看对话列表
+  ['chat:regenerate']: false,// 重新问答，依赖配置删除单条对话内容 -> delete:chat:history:item
+  ['chat:like']: false,// 点赞
+  ['chat:dislike']: false,// 点踩
+  ['delete:chat:history']: false,// 删除全部历史记录
+  ['delete:chat:history:item']: false,// 删除单条历史记录
+  ['delete:chat:content:item']: false,// 删除单条对话
+  ['upload:file']: false,// 上传附件按钮
 }
 
 export type PageConfigType = {

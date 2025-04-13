@@ -8,13 +8,14 @@
     </div>
     <div class="chat-list__chat-config">
       <el-button
+        v-if="hasRole('chat:new')"
         :disabled="loading"
         @click="newChat(appConfig)" class="chat-list__chat-config__new-chat"
         :icon="ChatDotRound"
         round
       >新对话
       </el-button>
-      <el-popconfirm @confirm="clearChatList" v-if="hasRole('delete:patch')" width="220"
+      <el-popconfirm @confirm="clearChatList" v-if="hasRole('delete:chat:history')" width="220"
                      title="确认删除所有聊天记录？" confirm-button-text="确认"
                      cancel-button-text="取消"
       >
@@ -47,7 +48,7 @@
           {{formatTime2shortText(item.updateTime)}}
         </span>
         <el-button @click.stop="removeChatItem(item)"
-                   v-if="hasRole('delete:single')"
+                   v-if="hasRole('delete:chat:history:item')"
                    :icon="Delete"
                    :disabled="loading"
                    size="small"
@@ -93,7 +94,7 @@ const { arrivedState } = useScroll(appListRef)
 
 watch(() => arrivedState.bottom, (value) => {
   if (value) {
-    // loadMore()
+    loadMore()
   }
 })
 

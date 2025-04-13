@@ -32,8 +32,14 @@ $ pnpm install @56jun/fe-chat
   }
   
   const permissionConfig = {
-    ['delete:patch']: true,// 批量删除
-    ['delete:single']: true,// 删除单条
+    ['delete:chat:history']: false,// 批量删除
+    ['delete:chat:history:item']: false,// 删除单条
+    ['chat:new']: false,// 新建对话
+    ['chat:history']: false,// 查看对话列表
+    ['chat:welcome']: false,// 查看欢迎语
+    ['chat:regenerate']: false,// 重新问答
+    ['chat:like']: false,// 点赞
+    ['chat:dislike']: false,// 点踩
     ['upload:file']: false,// 上传附件按钮
   }
   

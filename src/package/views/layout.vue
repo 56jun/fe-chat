@@ -1,8 +1,11 @@
 <template>
 <div class="layout__app-chat" v-bind="$attrs">
   <div class="chat-wrapper">
-    <ChatList />
-    <div v-if="activeChatId" class="chat-detail">
+    <ChatList v-if="hasRole('chat:history')" />
+    <div v-if="activeChatId"
+         class="chat-detail"
+         :class="{full: !hasRole('chat:history')}"
+    >
       <Chat :show-back="showBack"
             @genChatId="genChatId"
             @back="onBack"
@@ -48,7 +51,7 @@ const props = defineProps({
   },
 })
 
-const { setAppConfig, setPageConfig } = useChatConfig()
+const { setAppConfig, setPageConfig, hasRole } = useChatConfig()
 
 watch(() => props.appConfig, (config) => {
   setAppConfig(config)
@@ -93,6 +96,9 @@ onMounted(() => {
 }
 .chat-detail {
   width: calc(100% - 296px);
+  &.full {
+    width: 100%;
+  }
 }
 @media (max-width: 960px) {
   .layout__app-chat {

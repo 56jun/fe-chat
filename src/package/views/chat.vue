@@ -7,7 +7,8 @@
         <span class="chat-header__chat-title">
           {{ (currentChatTitle || '新对话').slice(0, 20) }}
         </span>
-        <img @click="viewDrawer"
+        <img v-if="hasRole('chat:history')"
+             @click="viewDrawer"
              class="chat-header__chat-history"
              src="@/assets/app-config.webp"
              height="20"
@@ -23,10 +24,11 @@
         </div>
       </div>
       <div class="chat-header__app-name">{{ appConfig.appName || '' }}</div>
-      <el-icon class="chat-header__new-chat" @click="newChat(appConfig)" size="22"><CirclePlus /></el-icon>
+      <el-icon v-if="hasRole('chat:new')" class="chat-header__new-chat" @click="newChat(appConfig)" size="22"><CirclePlus /></el-icon>
     </div>
     <div ref="answerWindowRef" class="answer-box">
       <div class="answer-content">
+        <!--回答-->
         <template v-for="(item, index) in message">
           <!--问题-->
           <ChatQuestion v-if="item.role === 'user'"
@@ -166,8 +168,6 @@ const {
   reAskQuestion,
   deleteChatDataItem
 } = useChat()
-
-const needUpdateParentChatListTitle = ref(false)
 
 const userInput = ref()
 const loadingChat = ref(false)
@@ -517,15 +517,17 @@ async function getMessage(chatId: string) {
       }
     }
   })
-  needUpdateParentChatListTitle.value = message.value.length === 0
-  if (message.value.length === 0) {
+  // 更新对话框顶部title
+  updateNewQuestion(activeChatId.value);
+  // 如果没有欢迎语，且有权限，则添加欢迎语
+  if (message.value[0]?.type !== 'welcome' && hasRole('chat:welcome')) {
     setLoading(true)
     const result: any = await getChatInitWelcome(chatId)
     setLoading(false)
     if (result) {
       const welcomeText = result?.data?.app?.chatConfig?.welcomeText || ''
       if (welcomeText) {
-        message.value.push({
+        message.value.unshift({
           dataId: 'welcomeText',
           role: 'assistant',
           progress: 'done',
@@ -540,6 +542,7 @@ async function getMessage(chatId: string) {
             }
           }]
         } as ChatType.ChatMessageType)
+        // message.value.push()
       }
     }
   }
@@ -553,6 +556,9 @@ async function getMessage(chatId: string) {
 async function handleReAskQuestion(item: ChatType.ChatMessageType) {
   const index = message.value.findIndex((x: any) => x.dataId === item.dataId)
   if (index < 0) return;
+  if (!hasRole('delete:chat:content:item')) {
+    return ElMessage.warning('暂无删除权限：delete:chat:content:item')
+  }
   // 先删除用户问答
   for (let i = message.value.length - 1; i > index - 1; i--) {
     if (message.value[i].role === 'user') {
@@ -656,6 +662,7 @@ onUnmounted(() => {
     .answer-content {
       max-width: 92%;
       margin-inline: auto;
+      padding-top: 20px;
     }
     .robot-bg {
       width: 33px;

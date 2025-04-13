@@ -46,7 +46,7 @@
           <div class="answer-item__reasoning__title"
                @click="() => { responseItem.hide = !responseItem.hide }"
           >
-            <span>&nbsp;&nbsp;思考过程&nbsp;&nbsp;</span>
+            <span>思考过程&nbsp;</span>
             <el-icon>
               <ArrowDown v-show="responseItem.hide" />
               <ArrowUp v-show="!responseItem.hide" />
@@ -277,6 +277,7 @@ const open = (): Promise<string | false> => {
     font-size: 18px;
     cursor: pointer;
     display: none;
+    color: #8a95a7;
   }
 }
 .success {
