@@ -165,7 +165,6 @@ const {
   updateNewQuestion,
   newChat,
   currentChatTitle,
-  reAskQuestion,
   deleteChatDataItem
 } = useChat()
 

@@ -3,6 +3,7 @@ import { clearHistories, getHistories, getPaginationRecords, deleteHistories } f
 import { type ChatType } from "@/type/chat.ts"
 import moment from "moment";
 import { guid } from "@/utils";
+import { cancelAudio } from '@/utils/voice.ts'
 
 
 const activeChatId = ref<string>('')
@@ -20,6 +21,8 @@ const isAnswering = computed(() => {
   const lastProgress = message.value[message.value.length - 1]?.progress || 'init'
   return ['connecting', 'preThinking', 'outputting'].includes(lastProgress)
 })
+
+// const isDevEnv =import.meta.env.MODE === 'development'
 
 export interface UseChatResponse {
   loading: boolean
@@ -82,7 +85,20 @@ export const useChat = () => {
   }
 
   function getQuestionText(item: ChatType.ChatMessageType) {
-    const text = Array.isArray(item.content) ? item.content.filter(x => x.type === 'text').map(x => x.text).join('')
+    const text = Array.isArray(item.content)
+      ? item.content.filter((x: ChatType.ChatMessageType) => x.type === 'text')
+        .map((x: ChatType.ChatMessageType) => x.text)
+        .join('')
+      : item.content
+    if (!text) return;
+    return text;
+  }
+
+  function getAnswerText(item: ChatType.ChatMessageType) {
+    const text = Array.isArray(item.value)
+      ? item.value.filter((x: ChatType.ChatMessageType) => x.type === 'text')
+        .map((x: ChatType.ChatMessageType) => x.text.content)
+        .join('')
       : item.content
     if (!text) return;
     return text;
@@ -96,7 +112,6 @@ export const useChat = () => {
     if (lastQuestionIndex === -1) return;
     const item = message.value[lastQuestionIndex]
     const text = getQuestionText(item)
-    console.log('text', text)
     chat.title = text
     currentChatTitle.value = text
   }
@@ -154,18 +169,6 @@ export const useChat = () => {
     })
   }
 
-
-  // todo
-  function reAskQuestion(item: ChatType.ChatMessageType) {
-    const chatIndex = message.value.findIndex(chat => chat.id === item.id)
-    if (chatIndex < 0) return;
-    const chatItem = message.value[chatIndex]
-    const text = getQuestionText(item)
-    if (!text) return;
-    // chat.title = text
-    // currentChatTitle.value = text
-  }
-
   function reset() {
     activeChatId.value = ''
     history.value = []
@@ -190,12 +193,12 @@ export const useChat = () => {
     setActiveChatId,
     clearChatHistory,
     reset,
-    reAskQuestion,
     deleteChatDataItem,
     updateNewQuestion,
     newChat,
     getChatList,
     getQuestionText,
+    getAnswerText,
   }
 }
 
@@ -214,6 +217,7 @@ export const PAGE_CONFIG_DEFAULT = {
   ['chat:regenerate']: false,// 重新问答，依赖配置删除单条对话内容 -> delete:chat:history:item
   ['chat:like']: false,// 点赞
   ['chat:dislike']: false,// 点踩
+  ['chat:voice:play']: false,// 语音播放功能
   ['delete:chat:history']: false,// 删除全部历史记录
   ['delete:chat:history:item']: false,// 删除单条历史记录
   ['delete:chat:content:item']: false,// 删除单条对话
@@ -263,6 +267,7 @@ export const useChatConfig = () => {
       baseURL: '',
     })
     Object.assign(permissionConfig, PAGE_CONFIG_DEFAULT)
+    cancelAudio();
   }
 
   return {

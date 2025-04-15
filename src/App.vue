@@ -11,12 +11,12 @@
 import Layout from '@/package/views/layout.vue'
 import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { PAGE_CONFIG_DEFAULT } from '@/package/index.ts'
+import { PAGE_CONFIG_DEFAULT, type PageConfigType } from '@/package/index.ts'
 
 const DEFAULT_APP = {
   'appName': 'xx知识库',
-  'appId': 'xxxxxx',
-  'apiKey': 'fastgpt-xxxxxxx',
+  'appId': 'xxxxx',
+  'apiKey': 'fastgpt-xxxxx',
 }
 
 const appConfig = reactive({
@@ -27,19 +27,13 @@ const appConfig = reactive({
   baseURL: import.meta.env.VITE_BASE_URL
 })
 
-// const permission = ref(PAGE_CONFIG_DEFAULT)
-const permission = {
-  ['chat:new']: true,// 新建对话
-  ['chat:welcome']: true,// 查看欢迎语
-  ['chat:history']: true,// 查看对话列表
-  ['chat:regenerate']: true,// 重新问答，依赖配置删除单条对话内容 -> delete:chat:history:item
-  ['chat:like']: true,// 点赞
-  ['chat:dislike']: true,// 点踩
-  ['delete:chat:history']: true,// 删除全部历史记录
-  ['delete:chat:history:item']: true,// 删除单条历史记录
-  ['delete:chat:content:item']: true,// 删除单条对话
-  ['upload:file']: true,// 上传附件按钮
-}
+const permission = Object.assign(Object.fromEntries(Object.entries(PAGE_CONFIG_DEFAULT).map(([key, value]) => {
+  return [key, true]
+})) as PageConfigType, {
+  // example
+  ['chat:welcome']: false,
+})
+
 const visible = ref(false)
 
 const router = useRouter()

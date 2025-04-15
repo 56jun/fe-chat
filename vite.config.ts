@@ -50,22 +50,19 @@ export default defineConfig((config) => {
       host: true,
       open: false,
       proxy: {
-        '/api': {
-          target: 'http://218.22.24.55:10000/',
-          changeOrigin: true,
-        },
-        [env.VITE_BASE_URL]: {
-          // target:'http://2964pu8867.vicp.fun/',
-          // target:'https://zhgx.aihfgx.com/ai',
-          target: 'http://218.22.24.55:10000/ai',
-          // target:'http://10.161.3.174:3000/',
-          // target:'http://localhost:3000/',
-          changeOrigin: true,
-          rewrite(path) {
-            const reg = new RegExp('^' + env.VITE_BASE_URL, 'g')
-            return path.replace(reg, '')
-          }
-        },
+        // todo 下面的代理替换成自己的服务
+        // '/api': {
+        //   target: 'http://xxxxxx.xxx/',
+        //   changeOrigin: true,
+        // },
+        // [env.VITE_BASE_URL]: {
+        //   target: 'http://xxx.xxx:10000',
+        //   changeOrigin: true,
+        //   rewrite(path) {
+        //     const reg = new RegExp('^' + env.VITE_BASE_URL, 'g')
+        //     return path.replace(reg, '')
+        //   }
+        // },
       }
     },
     resolve: {
@@ -75,5 +72,8 @@ export default defineConfig((config) => {
       },
     },
     build,
+    esbuild: {
+      drop: config.mode !== 'development' ? ['console', 'debugger'] : [],
+    },
   }
 })

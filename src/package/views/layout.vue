@@ -25,7 +25,7 @@ import {
   type AppConfigType,
   type PageConfigType
 } from "@/stores/userChat.ts";
-import { defineProps, defineEmits, watch, onMounted } from 'vue'
+import { defineProps, defineEmits, watch, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   appConfig: {
@@ -50,6 +50,7 @@ const props = defineProps({
     default: () => () => ''
   },
 })
+
 
 const { setAppConfig, setPageConfig, hasRole } = useChatConfig()
 

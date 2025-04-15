@@ -100,13 +100,6 @@ $ pnpm install @56jun/fe-chat
 > 需要进行 前置源配置
 * 修改src/App.vue文件进行测试
 ```
-// 执行打包命令
-$ pnpm package
-
-// 发布node包，!!!请先修改package.json中的版本号
-$ npm publish
-
-```
 
 ## 运行说明
 * pnpm i

@@ -16,6 +16,18 @@
             <el-icon @click="copyText()"><CopyDocument /></el-icon>
           </simple-tooltip>
         </li>
+        <!--    播放音频    -->
+        <li v-if="hasRole('chat:voice:play')">
+          <simple-tooltip v-if="activeAudioDataId !== item.dataId" content="朗读内容">
+            <svg-icon @click="playAudio" icon-class="voice"></svg-icon>
+          </simple-tooltip>
+          <simple-tooltip v-else content="停止">
+            <span @click="cancelAudio()" class="flex align-center" style="height: 16px;overflow-y: hidden;">
+              <svg-icon icon-class="stop-voice" color="red"></svg-icon>
+              <img src="@/assets/icons/speaking.gif" alt="" height="25" style="margin-left: 5px;">
+            </span>
+          </simple-tooltip>
+        </li>
         <!--    点赞 -->
         <li @click="likeOrDislike('Y')"
             v-if="hasRole('chat:like') && !item.userBadFeedback && item.type !== 'welcome'"
@@ -94,16 +106,31 @@ import { updateUserFeedback } from "@/api/api.ts";
 import { formatTime2shortText, copyDomText } from "@/utils/index.ts";
 import { useChatConfig, useChat } from "@/stores/userChat.ts";
 import SimpleTooltip from '@/package/views/components/simple-tooltip.vue'
+import { activeAudioDataId, playAudioByText, cancelAudio } from '@/utils/voice.ts'
 
 const props = defineProps<{
   item: ChatType.ChatMessageType
 }>()
 
-const { loading, activeChatId, setLoading } = useChat()
+const { loading, activeChatId, setLoading, getAnswerText } = useChat()
+
 
 const isAnsweringItem = computed(() => {
   return ['connecting', 'preThinking', 'outputting'].includes(props.item.progress)
 })
+
+function replaceThink(str: string) {
+  return str.replace(/<(\/?)think>/g, '')
+}
+
+function playAudio(events: Event) {
+  // @ts-ignore
+  events?.target?.blur();
+  let text = getAnswerText(props.item)
+  if (!text) return;
+  text = replaceThink(text)?.trim()
+  playAudioByText({ text, dataId: props.item.dataId })
+}
 
 const timer = computed(() => {
   return formatTime2shortText(props.item.time)
@@ -113,11 +140,9 @@ const { appConfig, hasRole } = useChatConfig()
 const emits = defineEmits(['updateFeedback'])
 
 function copyText() {
-  const text = props.item.value?.map((x: ChatType.ResponseAnswerItemType) => {
-    if (x.type !== AnswerTypeEnum.text) return '';
-    return x.text.content;
-  })
-  if (copyDomText(text.join(" "))) {
+  const text = getAnswerText(props.item)
+  if (!text) return;
+  if (copyDomText(text)) {
     ElMessage.success("已复制到剪贴板");
   }
 }
@@ -178,7 +203,7 @@ const open = (): Promise<string | false> => {
 <style scoped lang="less">
 .answer-content__assistant {
   position: relative;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
   .robot-bg {
     width: var(--avatar-size);
     height: var(--avatar-size);
@@ -272,8 +297,8 @@ const open = (): Promise<string | false> => {
   }
   .bottom-copy-btn {
     position: absolute;
-    right: -25px;
-    bottom: 0;
+    left: 0;
+    bottom: -18px;
     font-size: 18px;
     cursor: pointer;
     display: none;
