@@ -24,7 +24,7 @@ export function getChatApi() {
 // todo 上传文件
 export async function uploadFile(formData: FormData): Promise<{ data: { yswjmc: string, wjfwurl: string } } | false> {
   return new Promise((resolve) => {
-    axios.post('https://zhgx.aihfgx.com/api/zhgx/jcpz/wjgl/uploadFileToSever', formData, {
+    axios.post(YOUR_UPLOAD_URL, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
